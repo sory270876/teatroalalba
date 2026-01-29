@@ -26,5 +26,5 @@ certamenes:
     premios:
       - tipo: "premio"
         categoria: "Premio del público"
-order: 1
+order: 3
 ---

@@ -65,5 +65,5 @@ certamenes:
     premios:
       - tipo: "premio"
         categoria: "Mejor montaje local"
-order: 3
+order: 1
 ---
