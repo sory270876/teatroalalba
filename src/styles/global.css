@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+/* Custom theme configuration */
+@theme {
+  /* Colors - Burgundy primary with elegant neutrals */
+  --color-burgundy-50: #fdf2f4;
+  --color-burgundy-100: #fce7eb;
+  --color-burgundy-200: #f9d0d9;
+  --color-burgundy-300: #f4a9ba;
+  --color-burgundy-400: #ec7994;
+  --color-burgundy-500: #df4d72;
+  --color-burgundy-600: #c9305a;
+  --color-burgundy-700: #a92349;
+  --color-burgundy-800: #8d2041;
+  --color-burgundy-900: #781d3b;
+  --color-burgundy-950: #900C3F;
+
+  --color-charcoal-50: #f6f6f6;
+  --color-charcoal-100: #e7e7e7;
+  --color-charcoal-200: #d1d1d1;
+  --color-charcoal-300: #b0b0b0;
+  --color-charcoal-400: #888888;
+  --color-charcoal-500: #6d6d6d;
+  --color-charcoal-600: #5d5d5d;
+  --color-charcoal-700: #4f4f4f;
+  --color-charcoal-800: #454545;
+  --color-charcoal-900: #3d3d3d;
+  --color-charcoal-950: #151515;
+
+  --color-cream-50: #fefefe;
+  --color-cream-100: #f8f8f8;
+  --color-cream-200: #f0f0f0;
+  --color-cream-300: #e8e8e8;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+}
+
+/* Base styles */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-cream-100 text-charcoal-900 font-sans antialiased;
+  }
+
+  h1, h2, h3 {
+    @apply font-serif;
+  }
+
+  /* Focus styles for accessibility */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-burgundy-600;
+  }
+}
+
+/* Custom utilities */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Gradient overlay for hero sections */
+  .hero-overlay {
+    background: linear-gradient(
+      to bottom,
+      rgba(21, 21, 21, 0.3) 0%,
+      rgba(21, 21, 21, 0.6) 100%
+    );
+  }
+
+  /* Smooth image hover effect */
+  .img-hover {
+    @apply transition-transform duration-500 ease-out;
+  }
+
+  .img-hover:hover {
+    @apply scale-105;
+  }
+}
+
+/* Animations */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out forwards;
+  }
+
+  .animate-fade-in-delay-1 {
+    animation: fadeIn 0.6s ease-out 0.2s forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-in-delay-2 {
+    animation: fadeIn 0.6s ease-out 0.4s forwards;
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

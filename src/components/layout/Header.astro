@@ -1,0 +1,99 @@
+---
+import { navigation, siteConfig } from '../../data/siteConfig';
+
+const currentPath = Astro.url.pathname;
+---
+
+<header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-charcoal-100">
+  <nav class="container mx-auto px-4 lg:px-8">
+    <div class="flex items-center justify-between h-16 lg:h-20">
+      <!-- Logo -->
+      <a href="/" class="flex items-center gap-3 group">
+        <span class="text-2xl lg:text-3xl font-display font-semibold text-burgundy-950 group-hover:text-burgundy-800 transition-colors">
+          Teatro Al Alba
+        </span>
+      </a>
+
+      <!-- Desktop Navigation -->
+      <ul class="hidden lg:flex items-center gap-1">
+        {navigation.map(item => (
+          <li>
+            <a
+              href={item.href}
+              class:list={[
+                'px-4 py-2 text-sm font-medium rounded-lg transition-colors',
+                currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href))
+                  ? 'text-burgundy-950 bg-burgundy-50'
+                  : 'text-charcoal-600 hover:text-burgundy-950 hover:bg-charcoal-50'
+              ]}
+            >
+              {item.name}
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <!-- Mobile Menu Button -->
+      <button
+        id="mobile-menu-btn"
+        type="button"
+        class="lg:hidden p-2 text-charcoal-600 hover:text-burgundy-950 hover:bg-charcoal-50 rounded-lg transition-colors"
+        aria-label="Abrir menú"
+        aria-expanded="false"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path id="menu-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          <path id="close-icon" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="hidden lg:hidden border-t border-charcoal-100 bg-white">
+    <ul class="container mx-auto px-4 py-4 space-y-1">
+      {navigation.map(item => (
+        <li>
+          <a
+            href={item.href}
+            class:list={[
+              'block px-4 py-3 text-base font-medium rounded-lg transition-colors',
+              currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href))
+                ? 'text-burgundy-950 bg-burgundy-50'
+                : 'text-charcoal-600 hover:text-burgundy-950 hover:bg-charcoal-50'
+            ]}
+          >
+            {item.name}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</header>
+
+<!-- Spacer for fixed header -->
+<div class="h-16 lg:h-20"></div>
+
+<script>
+  const menuBtn = document.getElementById('mobile-menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const menuIcon = document.getElementById('menu-icon');
+  const closeIcon = document.getElementById('close-icon');
+
+  menuBtn?.addEventListener('click', () => {
+    const isOpen = mobileMenu?.classList.toggle('hidden');
+    menuBtn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+    menuIcon?.classList.toggle('hidden');
+    closeIcon?.classList.toggle('hidden');
+  });
+
+  // Close menu on click outside
+  document.addEventListener('click', (e) => {
+    if (!menuBtn?.contains(e.target as Node) && !mobileMenu?.contains(e.target as Node)) {
+      mobileMenu?.classList.add('hidden');
+      menuBtn?.setAttribute('aria-expanded', 'false');
+      menuIcon?.classList.remove('hidden');
+      closeIcon?.classList.add('hidden');
+    }
+  });
+</script>

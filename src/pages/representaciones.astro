@@ -1,0 +1,160 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/common/Button.astro';
+import { getCollection } from 'astro:content';
+
+const representaciones = await getCollection('representaciones');
+
+// Sort by date
+const sortedRepresentaciones = representaciones.sort((a, b) =>
+  new Date(a.data.date).getTime() - new Date(b.data.date).getTime()
+);
+
+// Format date in Spanish
+function formatDate(date: Date): string {
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  };
+  return new Date(date).toLocaleDateString('es-ES', options);
+}
+
+function formatShortDate(date: Date): { day: string; month: string } {
+  const d = new Date(date);
+  return {
+    day: d.getDate().toString(),
+    month: d.toLocaleDateString('es-ES', { month: 'short' }).toUpperCase()
+  };
+}
+---
+
+<BaseLayout
+  title="Representaciones"
+  description="Consulta las próximas representaciones de Teatro Al Alba y no te pierdas ninguna función."
+>
+  <!-- Hero -->
+  <section class="bg-charcoal-950 text-white py-20 lg:py-28">
+    <div class="container mx-auto px-4 lg:px-8 text-center">
+      <span class="text-burgundy-400 font-medium text-sm uppercase tracking-wider">
+        Calendario
+      </span>
+      <h1 class="mt-4 text-4xl md:text-5xl lg:text-6xl font-display font-bold">
+        Próximas Representaciones
+      </h1>
+      <p class="mt-4 text-lg text-charcoal-300 max-w-2xl mx-auto">
+        Ven a disfrutar del teatro en directo
+      </p>
+    </div>
+  </section>
+
+  <!-- Representaciones -->
+  <section class="py-20 lg:py-28 bg-cream-100">
+    <div class="container mx-auto px-4 lg:px-8">
+      {sortedRepresentaciones.length > 0 ? (
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-animate>
+          {sortedRepresentaciones.map((rep) => {
+            const shortDate = formatShortDate(rep.data.date);
+            return (
+              <article class="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow">
+                <div class="relative">
+                  <img
+                    src={rep.data.image}
+                    alt={rep.data.obra}
+                    class={`w-full h-64 object-cover ${rep.data.obraSlug === 'la-trampa' ? 'object-[center_20%]' : ''}`}
+                    loading="lazy"
+                  />
+                  <div class="absolute top-4 left-4 bg-burgundy-600 text-white rounded-lg px-3 py-2 text-center min-w-[60px]">
+                    <div class="text-2xl font-bold leading-none">{shortDate.day}</div>
+                    <div class="text-xs uppercase tracking-wider">{shortDate.month}</div>
+                  </div>
+                </div>
+                <div class="p-6">
+                  {rep.data.event && (
+                    <span class="text-burgundy-600 font-medium text-sm uppercase tracking-wider">
+                      {rep.data.event}
+                    </span>
+                  )}
+                  <h3 class="mt-2 text-xl font-display font-semibold text-charcoal-900">
+                    <a href={`/obra/${rep.data.obraSlug}`} class="hover:text-burgundy-600 transition-colors">
+                      {rep.data.obra}
+                    </a>
+                  </h3>
+                  <div class="mt-4 space-y-2 text-sm text-charcoal-600">
+                    <div class="flex items-center gap-2">
+                      <svg class="w-4 h-4 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      <span>{rep.data.time}h</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <svg class="w-4 h-4 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      </svg>
+                      <span>{rep.data.venue}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <svg class="w-4 h-4 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      <span>{rep.data.city}, {rep.data.province}</span>
+                    </div>
+                  </div>
+                  <div class="mt-6">
+                    <Button href={`/obra/${rep.data.obraSlug}`} variant="outline" class="w-full text-center justify-center">
+                      Ver obra
+                    </Button>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <div class="max-w-3xl mx-auto">
+          <div class="bg-white rounded-2xl p-8 text-center shadow-md" data-animate>
+            <div class="w-16 h-16 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg class="w-8 h-8 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-display font-semibold text-charcoal-900">
+              Próximamente
+            </h2>
+            <p class="mt-4 text-charcoal-600">
+              Estamos preparando nuevas fechas para nuestras representaciones.
+              Síguenos en redes sociales para enterarte de las novedades.
+            </p>
+            <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Button href="/contacto">
+                Contactar para eventos
+              </Button>
+              <Button href="https://www.instagram.com/teatroalalba/" variant="outline" target="_blank">
+                Seguir en Instagram
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <!-- Información de contratación -->
+      <div class="mt-16 max-w-3xl mx-auto p-8 bg-burgundy-50 rounded-2xl" data-animate>
+        <h3 class="text-xl font-display font-semibold text-charcoal-900">
+          ¿Quieres contratarnos?
+        </h3>
+        <p class="mt-3 text-charcoal-600">
+          Llevamos nuestras obras a teatros, centros culturales, festivales y eventos privados.
+          Si estás interesado en programar una de nuestras producciones, no dudes en ponerte
+          en contacto con nosotros.
+        </p>
+        <div class="mt-6">
+          <Button href="/contacto" variant="primary">
+            Solicitar información
+          </Button>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,157 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/home/Hero.astro';
+import SectionTitle from '../components/common/SectionTitle.astro';
+import ObraCard from '../components/obras/ObraCard.astro';
+import Button from '../components/common/Button.astro';
+import { getCollection } from 'astro:content';
+import { siteConfig } from '../data/siteConfig';
+
+const obrasCartelera = await getCollection('obras', ({ data }) => data.status === 'cartelera');
+const premios = await getCollection('premios');
+---
+
+<BaseLayout title="Inicio">
+  <!-- Hero Section -->
+  <Hero />
+
+  <!-- Obras en Cartelera -->
+  <section class="py-20 lg:py-28 bg-white">
+    <div class="container mx-auto px-4 lg:px-8">
+      <SectionTitle
+        title="En Cartelera"
+        subtitle="Descubre nuestras obras actuales y déjate llevar por la magia del teatro"
+      />
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" data-animate>
+        {obrasCartelera.sort((a, b) => (a.data.order || 0) - (b.data.order || 0)).map((obra) => (
+          <ObraCard
+            title={obra.data.title}
+            description={obra.data.description}
+            coverImage={obra.data.coverImage}
+            author={obra.data.author}
+            slug={obra.slug}
+            status={obra.data.status}
+          />
+        ))}
+      </div>
+
+      <div class="text-center mt-12">
+        <Button href="/cartelera" variant="outline">
+          Ver toda la cartelera
+        </Button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quiénes Somos Preview -->
+  <section class="py-20 lg:py-28 bg-cream-100">
+    <div class="container mx-auto px-4 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div data-animate>
+          <span class="text-burgundy-600 font-medium text-sm uppercase tracking-wider">
+            Desde {siteConfig.foundedYear}
+          </span>
+          <h2 class="mt-4 text-3xl md:text-4xl lg:text-5xl font-display font-semibold text-charcoal-900">
+            Un sueño teatral hecho realidad
+          </h2>
+          <p class="mt-6 text-lg text-charcoal-600 leading-relaxed">
+            Grupo de teatro amateur de Getafe, Madrid. Teatro Al Alba estrenó su primera obra en 1982.
+            Desde entonces, nuestro principal objetivo ha sido siempre sentir y hacer sentir el teatro.
+          </p>
+          <blockquote class="mt-6 pl-6 border-l-4 border-burgundy-600 italic text-charcoal-700 font-serif text-xl">
+            "No se trata de contar historias, se trata de formar parte de ellas y que ellas formen parte de ti."
+          </blockquote>
+          <div class="mt-8">
+            <Button href="/quienes-somos">
+              Conoce nuestra historia
+            </Button>
+          </div>
+        </div>
+
+        <div class="relative" data-animate>
+          <div class="aspect-[4/3] rounded-2xl overflow-hidden shadow-xl">
+            <img
+              src="/images/galeria/2a760b17-bbf0-4f3c-9b21-87122351f26d/image.jpg"
+              alt="Teatro Al Alba en escena"
+              class="w-full h-full object-cover"
+              loading="lazy"
+            />
+          </div>
+          <div class="absolute -bottom-6 -left-6 w-32 h-32 bg-burgundy-950 rounded-2xl -z-10" />
+          <div class="absolute -top-6 -right-6 w-24 h-24 bg-burgundy-100 rounded-2xl -z-10" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Premios Highlight -->
+  <section class="py-20 lg:py-28 bg-charcoal-950 text-white">
+    <div class="container mx-auto px-4 lg:px-8">
+      <div class="text-center mb-16" data-animate>
+        <span class="text-burgundy-400 font-medium text-sm uppercase tracking-wider">
+          Reconocimientos
+        </span>
+        <h2 class="mt-4 text-3xl md:text-4xl lg:text-5xl font-display font-semibold">
+          Más de 21 Premios
+        </h2>
+        <p class="mt-4 text-lg text-charcoal-300 max-w-2xl mx-auto">
+          Décadas de trabajo, pasión y dedicación reconocidas en certámenes de toda España
+        </p>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center mb-12" data-animate>
+        <div>
+          <div class="text-4xl lg:text-5xl font-display font-bold text-burgundy-400">
+            +40
+          </div>
+          <div class="mt-2 text-charcoal-400 text-sm">Años de historia</div>
+        </div>
+        <div>
+          <div class="text-4xl lg:text-5xl font-display font-bold text-burgundy-400">
+            +21
+          </div>
+          <div class="mt-2 text-charcoal-400 text-sm">Premios obtenidos</div>
+        </div>
+        <div>
+          <div class="text-4xl lg:text-5xl font-display font-bold text-burgundy-400">
+            +50
+          </div>
+          <div class="mt-2 text-charcoal-400 text-sm">Obras representadas</div>
+        </div>
+        <div>
+          <div class="text-4xl lg:text-5xl font-display font-bold text-burgundy-400">
+            +1000
+          </div>
+          <div class="mt-2 text-charcoal-400 text-sm">Funciones realizadas</div>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <Button href="/premios" variant="outline" class="border-white text-white hover:bg-white/10">
+          Ver todos los premios
+        </Button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Contacto -->
+  <section class="py-20 lg:py-28 bg-burgundy-950 text-white">
+    <div class="container mx-auto px-4 lg:px-8 text-center" data-animate>
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-display font-semibold">
+        ¿Quieres contratarnos?
+      </h2>
+      <p class="mt-4 text-lg text-burgundy-200 max-w-2xl mx-auto">
+        Llevamos el teatro a tu evento, festival o espacio cultural. Contacta con nosotros para conocer nuestras propuestas.
+      </p>
+      <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <Button href="/contacto" variant="outline" class="border-white text-white hover:bg-white/10">
+          Contactar
+        </Button>
+        <Button href="/representaciones" variant="outline" class="border-white text-white hover:bg-white/10">
+          Ver próximas funciones
+        </Button>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

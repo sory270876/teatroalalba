@@ -1,0 +1,14 @@
+# Docker Compose para desarrollo local (sin Traefik)
+services:
+  teatro-alalba:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: teatro-alalba-local
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+
+# Uso:
+# docker compose -f docker-compose.local.yml up --build
+# Acceder en http://localhost:8080

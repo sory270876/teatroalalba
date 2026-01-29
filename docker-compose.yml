@@ -1,0 +1,58 @@
+services:
+  traefik:
+    image: traefik:v3.2
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/acme.json:/acme.json
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      # Dashboard (optional - disable in production)
+      - "traefik.http.routers.traefik.rule=Host(`traefik.monghit.com`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$xyz$$hashedpassword"
+
+  teatro-alalba:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: teatro-alalba
+    restart: unless-stopped
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      # HTTP to HTTPS redirect
+      - "traefik.http.routers.teatro-http.rule=Host(`teatroalalba.monghit.com`)"
+      - "traefik.http.routers.teatro-http.entrypoints=web"
+      - "traefik.http.routers.teatro-http.middlewares=https-redirect"
+      # HTTPS
+      - "traefik.http.routers.teatro.rule=Host(`teatroalalba.monghit.com`)"
+      - "traefik.http.routers.teatro.entrypoints=websecure"
+      - "traefik.http.routers.teatro.tls=true"
+      - "traefik.http.routers.teatro.tls.certresolver=letsencrypt"
+      - "traefik.http.services.teatro.loadbalancer.server.port=80"
+      # Security headers middleware
+      - "traefik.http.routers.teatro.middlewares=security-headers"
+      - "traefik.http.middlewares.security-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.security-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.security-headers.headers.stsPreload=true"
+      # Redirect middleware
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+
+networks:
+  web:
+    external: true

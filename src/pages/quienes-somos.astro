@@ -1,0 +1,128 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/common/Button.astro';
+import { siteConfig } from '../data/siteConfig';
+---
+
+<BaseLayout
+  title="Quiénes somos"
+  description="Conoce la historia de Teatro Al Alba, grupo de teatro amateur de Getafe fundado en 1982."
+>
+  <!-- Hero -->
+  <section class="bg-charcoal-950 text-white py-20 lg:py-28">
+    <div class="container mx-auto px-4 lg:px-8 text-center">
+      <span class="text-burgundy-400 font-medium text-sm uppercase tracking-wider">
+        Desde {siteConfig.foundedYear}
+      </span>
+      <h1 class="mt-4 text-4xl md:text-5xl lg:text-6xl font-display font-bold">
+        Quiénes somos
+      </h1>
+      <p class="mt-4 text-lg text-charcoal-300 max-w-2xl mx-auto">
+        Más de 40 años haciendo teatro con pasión
+      </p>
+    </div>
+  </section>
+
+  <!-- Historia -->
+  <section class="py-20 lg:py-28 bg-white">
+    <div class="container mx-auto px-4 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div data-animate>
+          <h2 class="text-3xl md:text-4xl font-display font-semibold text-charcoal-900">
+            Nuestra Historia
+          </h2>
+          <div class="mt-6 space-y-4 text-charcoal-600 leading-relaxed">
+            <p>
+              Teatro Al Alba nació en <strong>1982</strong> en Getafe, Madrid, de la mano de un grupo de
+              apasionados por las tablas que soñaban con llevar el teatro a su comunidad.
+            </p>
+            <p>
+              Desde aquel primer estreno, hemos mantenido una máxima que nos define: <em>sentir y hacer
+              sentir el teatro</em>. No nos conformamos con representar obras; buscamos que cada función
+              sea una experiencia que transforme tanto a quienes la interpretan como a quienes la presencian.
+            </p>
+            <p>
+              A lo largo de estas cuatro décadas, hemos evolucionado constantemente, adaptándonos a los
+              tiempos pero sin perder nunca nuestra esencia amateur en el sentido más noble de la palabra:
+              hacemos teatro por amor al arte.
+            </p>
+          </div>
+        </div>
+
+        <div class="relative" data-animate>
+          <div class="aspect-square rounded-2xl overflow-hidden shadow-xl">
+            <img
+              src="/images/galeria/f257efbc-d50f-49a5-a176-8d6781f9b21d/image.jpg"
+              alt="Teatro Al Alba - Historia"
+              class="w-full h-full object-cover"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filosofía -->
+  <section class="py-20 lg:py-28 bg-cream-100">
+    <div class="container mx-auto px-4 lg:px-8">
+      <div class="max-w-3xl mx-auto text-center" data-animate>
+        <h2 class="text-3xl md:text-4xl font-display font-semibold text-charcoal-900">
+          Nuestra Filosofía
+        </h2>
+        <blockquote class="mt-8 text-2xl md:text-3xl font-serif italic text-charcoal-700">
+          "No se trata de contar historias, se trata de formar parte de ellas y que ellas formen parte de ti."
+        </blockquote>
+        <div class="mt-8 space-y-4 text-charcoal-600 leading-relaxed text-left">
+          <p>
+            Esta frase resume todo lo que somos y aspiramos a ser. El teatro, para nosotros, no es un
+            simple pasatiempo ni una afición más. Es una forma de vida, una manera de conectar con
+            las emociones más profundas del ser humano.
+          </p>
+          <p>
+            Cada obra que montamos es un viaje que emprendemos juntos: actores, técnicos y público.
+            Nos sumergimos en las historias que contamos hasta que dejan de ser ajenas y se convierten
+            en parte de nuestra propia experiencia vital.
+          </p>
+          <p>
+            Y esa es la magia que queremos transmitir a quienes nos ven: que por un momento, dejen de
+            ser espectadores y se conviertan en partícipes de algo único e irrepetible.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Fundador -->
+  <section class="py-20 lg:py-28 bg-charcoal-950 text-white">
+    <div class="container mx-auto px-4 lg:px-8 text-center" data-animate>
+      <span class="text-burgundy-400 font-medium text-sm uppercase tracking-wider">
+        Fundador
+      </span>
+      <h2 class="mt-4 text-3xl md:text-4xl font-display font-semibold">
+        {siteConfig.founder}
+      </h2>
+      <p class="mt-4 text-lg text-charcoal-300 max-w-2xl mx-auto">
+        Visionario y apasionado del teatro, fundó Teatro Al Alba con el sueño de crear un espacio
+        donde el arte escénico pudiera florecer en Getafe.
+      </p>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-20 lg:py-28 bg-burgundy-950 text-white">
+    <div class="container mx-auto px-4 lg:px-8 text-center" data-animate>
+      <h2 class="text-3xl md:text-4xl font-display font-semibold">
+        ¿Quieres vernos en acción?
+      </h2>
+      <p class="mt-4 text-lg text-burgundy-200 max-w-2xl mx-auto">
+        Consulta nuestra cartelera y reserva tu entrada para la próxima función.
+      </p>
+      <div class="mt-8">
+        <Button href="/cartelera" variant="outline" class="border-white text-white hover:bg-white/10">
+          Ver cartelera
+        </Button>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

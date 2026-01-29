@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionTitle from '../components/common/SectionTitle.astro';
+import ObraCard from '../components/obras/ObraCard.astro';
+import { getCollection } from 'astro:content';
+
+const obrasCartelera = await getCollection('obras', ({ data }) => data.status === 'cartelera');
+---
+
+<BaseLayout
+  title="Cartelera"
+  description="Descubre las obras que Teatro Al Alba tiene actualmente en cartelera. Comedia, drama y mucho más."
+>
+  <!-- Hero -->
+  <section class="bg-charcoal-950 text-white py-20 lg:py-28">
+    <div class="container mx-auto px-4 lg:px-8 text-center">
+      <span class="text-burgundy-400 font-medium text-sm uppercase tracking-wider">
+        Temporada actual
+      </span>
+      <h1 class="mt-4 text-4xl md:text-5xl lg:text-6xl font-display font-bold">
+        En Cartelera
+      </h1>
+      <p class="mt-4 text-lg text-charcoal-300 max-w-2xl mx-auto">
+        Nuestras producciones actuales, listas para emocionarte
+      </p>
+    </div>
+  </section>
+
+  <!-- Obras Grid -->
+  <section class="py-20 lg:py-28 bg-cream-100">
+    <div class="container mx-auto px-4 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" data-animate>
+        {obrasCartelera.sort((a, b) => (a.data.order || 0) - (b.data.order || 0)).map((obra) => (
+          <ObraCard
+            title={obra.data.title}
+            description={obra.data.description}
+            coverImage={obra.data.coverImage}
+            author={obra.data.author}
+            slug={obra.slug}
+            status={obra.data.status}
+          />
+        ))}
+      </div>
+
+      {obrasCartelera.length === 0 && (
+        <div class="text-center py-12">
+          <p class="text-charcoal-500 text-lg">
+            No hay obras en cartelera actualmente. ¡Vuelve pronto!
+          </p>
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>

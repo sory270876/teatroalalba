@@ -1,0 +1,192 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Button from '../../components/common/Button.astro';
+import ImageCarousel from '../../components/common/ImageCarousel.astro';
+import { getCollection } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+
+export async function getStaticPaths() {
+  const obras = await getCollection('obras');
+  return obras.map((obra) => ({
+    params: { slug: obra.slug },
+    props: { obra },
+  }));
+}
+
+interface Props {
+  obra: CollectionEntry<'obras'>;
+}
+
+const { obra } = Astro.props;
+const { Content } = await obra.render();
+---
+
+<BaseLayout
+  title={obra.data.title}
+  description={obra.data.description}
+  image={obra.data.coverImage}
+>
+  <!-- Hero -->
+  <section class="relative min-h-[60vh] flex items-end">
+    <div class="absolute inset-0">
+      <img
+        src={obra.data.coverImage}
+        alt={obra.data.title}
+        class="w-full h-full object-cover"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-charcoal-950 via-charcoal-950/60 to-transparent" />
+    </div>
+
+    <div class="relative z-10 container mx-auto px-4 lg:px-8 pb-16">
+      <div class="max-w-3xl">
+        {obra.data.status === 'cartelera' && (
+          <span class="inline-block bg-burgundy-600 text-white text-sm font-semibold px-4 py-1 rounded-full mb-4">
+            En cartelera
+          </span>
+        )}
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white">
+          {obra.data.title}
+        </h1>
+        {obra.data.author && (
+          <p class="mt-4 text-xl text-burgundy-200">
+            {obra.data.author}
+          </p>
+        )}
+        <div class="mt-6 flex flex-wrap gap-4 text-charcoal-300 text-sm">
+          {obra.data.genre && (
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/>
+              </svg>
+              {obra.data.genre}
+            </span>
+          )}
+          {obra.data.duration && (
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              {obra.data.duration}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Video de YouTube -->
+  {obra.data.youtubeId && (
+    <section class="py-16 lg:py-20 bg-charcoal-950">
+      <div class="container mx-auto px-4 lg:px-8">
+        <div class="max-w-4xl mx-auto">
+          <h2 class="text-2xl md:text-3xl font-display font-semibold text-white text-center mb-8">
+            Ver fragmento de la obra
+          </h2>
+          <div class="aspect-video rounded-2xl overflow-hidden shadow-2xl">
+            <iframe
+              src={`https://www.youtube.com/embed/${obra.data.youtubeId}`}
+              title={`Video de ${obra.data.title}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+              class="w-full h-full"
+              loading="lazy"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Content -->
+  <section class="py-16 lg:py-24 bg-white">
+    <div class="container mx-auto px-4 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <!-- Main Content -->
+        <div class="lg:col-span-2">
+          <div class="prose prose-lg max-w-none prose-headings:font-display prose-headings:text-charcoal-900 prose-p:text-charcoal-600 prose-a:text-burgundy-600 hover:prose-a:text-burgundy-800 prose-strong:text-charcoal-900">
+            <Content />
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+          <div class="sticky top-24 space-y-6">
+            <!-- Info Card -->
+            <div class="bg-cream-100 rounded-2xl p-6">
+              <h3 class="font-display font-semibold text-charcoal-900 mb-4">
+                Información
+              </h3>
+              <dl class="space-y-3 text-sm">
+                {obra.data.author && (
+                  <div>
+                    <dt class="text-charcoal-500">Autor</dt>
+                    <dd class="font-medium text-charcoal-900">{obra.data.author}</dd>
+                  </div>
+                )}
+                {obra.data.genre && (
+                  <div>
+                    <dt class="text-charcoal-500">Género</dt>
+                    <dd class="font-medium text-charcoal-900">{obra.data.genre}</dd>
+                  </div>
+                )}
+                {obra.data.duration && (
+                  <div>
+                    <dt class="text-charcoal-500">Duración</dt>
+                    <dd class="font-medium text-charcoal-900">{obra.data.duration}</dd>
+                  </div>
+                )}
+                {obra.data.year && (
+                  <div>
+                    <dt class="text-charcoal-500">Año de producción</dt>
+                    <dd class="font-medium text-charcoal-900">{obra.data.year}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+
+            <!-- CTA -->
+            <div class="bg-burgundy-950 rounded-2xl p-6 text-white">
+              <h3 class="font-display font-semibold mb-2">
+                ¿Te interesa esta obra?
+              </h3>
+              <p class="text-burgundy-200 text-sm mb-4">
+                Contáctanos para más información sobre representaciones y contrataciones.
+              </p>
+              <Button href="/contacto" class="w-full bg-white text-burgundy-950 hover:bg-cream-100">
+                Contactar
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Galería de imágenes -->
+  {obra.data.gallery && obra.data.gallery.length > 0 && (
+    <section class="py-16 lg:py-24 bg-cream-100">
+      <div class="container mx-auto px-4 lg:px-8">
+        <h2 class="text-2xl md:text-3xl font-display font-semibold text-charcoal-900 text-center mb-12">
+          Galería de la representación
+        </h2>
+        <ImageCarousel
+          images={obra.data.gallery}
+          title={obra.data.title}
+          autoplayInterval={4000}
+        />
+      </div>
+    </section>
+  )}
+
+  <!-- Back -->
+  <section class="py-12 bg-white">
+    <div class="container mx-auto px-4 lg:px-8 text-center">
+      <Button href={obra.data.status === 'cartelera' ? '/cartelera' : '/obras-anteriores'} variant="outline">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Volver a {obra.data.status === 'cartelera' ? 'cartelera' : 'obras anteriores'}
+      </Button>
+    </div>
+  </section>
+</BaseLayout>

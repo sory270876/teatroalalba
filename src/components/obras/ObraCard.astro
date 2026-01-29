@@ -1,0 +1,52 @@
+---
+import Card from '../common/Card.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  coverImage: string;
+  author?: string;
+  slug: string;
+  status?: 'cartelera' | 'anterior';
+}
+
+const { title, description, coverImage, author, slug, status } = Astro.props;
+---
+
+<Card href={`/obra/${slug}`} class="group">
+  <div class="aspect-[3/4] relative overflow-hidden">
+    <img
+      src={coverImage}
+      alt={title}
+      class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+      loading="lazy"
+    />
+    {status === 'cartelera' && (
+      <span class="absolute top-4 right-4 bg-burgundy-950 text-white text-xs font-semibold px-3 py-1 rounded-full">
+        En cartelera
+      </span>
+    )}
+    <div class="absolute inset-0 bg-gradient-to-t from-charcoal-950/80 via-charcoal-950/20 to-transparent" />
+    <div class="absolute bottom-0 left-0 right-0 p-6">
+      <h3 class="text-xl font-display font-semibold text-white mb-1">
+        {title}
+      </h3>
+      {author && (
+        <p class="text-burgundy-200 text-sm">
+          {author}
+        </p>
+      )}
+    </div>
+  </div>
+  <div class="p-6">
+    <p class="text-charcoal-600 text-sm line-clamp-3">
+      {description}
+    </p>
+    <span class="inline-flex items-center gap-2 mt-4 text-burgundy-950 font-medium text-sm group-hover:gap-3 transition-all">
+      Ver más
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+      </svg>
+    </span>
+  </div>
+</Card>
