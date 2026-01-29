@@ -27,7 +27,7 @@ const premios = defineCollection({
     certamenes: z.array(z.object({
       nombre: z.string(),
       premios: z.array(z.object({
-        tipo: z.enum(['premio', 'nominacion']),
+        tipo: z.enum(['premio', 'nominacion', 'mencion']),
         categoria: z.string(),
         persona: z.string().optional(),
       })),
