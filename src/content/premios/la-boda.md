@@ -26,5 +26,27 @@ certamenes:
       - tipo: "nominacion"
         categoria: "Mejor Actor Protagonista"
         persona: "Felipe del Cerro"
-order: 4
+  - nombre: "XXXV CERTAMEN CALAMONTE JOVEN 2025"
+    premios:
+      - tipo: "premio"
+        categoria: "Mejor vestuario"
+      - tipo: "nominacion"
+        categoria: "Mejor actriz principal"
+        persona: "Lydia Garrido"
+      - tipo: "nominacion"
+        categoria: "Mejor actor principal"
+        persona: "Felipe del Cerro"
+      - tipo: "nominacion"
+        categoria: "Mejor actor de reparto"
+        persona: "Javier Garrido"
+      - tipo: "nominacion"
+        categoria: "Mejor actor de reparto"
+        persona: "Juan José Berenguer"
+      - tipo: "nominacion"
+        categoria: "Mejor actriz de reparto"
+        persona: "Petri Calle"
+      - tipo: "nominacion"
+        categoria: "Mejor dirección"
+        persona: "Alberto Garrido y Juan José Berenguer"
+order: 2
 ---

@@ -4,7 +4,7 @@ description: "Una historia que juega con los contrastes y las estaciones, donde 
 status: "anterior"
 coverImage: "/images/galeria/0e00f4e9-2294-4dc1-8f38-6d0fa6b79da5/image.jpg"
 genre: "Comedia dramática"
-order: 4
+order: 7
 ---
 
 ## Sobre la obra

@@ -4,7 +4,7 @@ description: "Una comedia que juega con las situaciones absurdas y los malentend
 status: "anterior"
 coverImage: "/images/galeria/b3a29b5b-687c-482f-8f34-e05009ba6c54/image.jpg"
 genre: "Comedia"
-order: 1
+order: 4
 ---
 
 ## Sobre la obra

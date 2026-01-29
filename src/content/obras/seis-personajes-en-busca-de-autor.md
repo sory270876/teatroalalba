@@ -5,7 +5,7 @@ description: "La obra maestra de Pirandello que revolucionó el teatro del siglo
 status: "anterior"
 coverImage: "/images/galeria/a8ebe9b5-df23-463f-a807-4c2385e2f578/image.jpg"
 genre: "Drama / Metateatral"
-order: 5
+order: 8
 ---
 
 ## Sinopsis

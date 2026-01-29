@@ -46,5 +46,28 @@ certamenes:
         persona: "Felipe del Cerro"
       - tipo: "nominacion"
         categoria: "Mejor obra"
-order: 2
+  - nombre: "II CERTAMEN DE TEATRO DE COSLADA"
+    premios:
+      - tipo: "mencion"
+        categoria: "Mención de honor mejor actriz"
+        persona: "Petri Calle"
+  - nombre: "XXVI CERTAMEN DE TEATRO CIUDAD DE BÉJAR"
+    premios:
+      - tipo: "premio"
+        categoria: "Mejor actriz secundaria"
+        persona: "Petri Calle"
+      - tipo: "nominacion"
+        categoria: "Mejor actor secundario"
+        persona: "Javier Garrido"
+  - nombre: "V CERTAMEN DE TEATRO VILLA DE ALGETE (MADRID)"
+    premios:
+      - tipo: "premio"
+        categoria: "Mejor obra"
+      - tipo: "premio"
+        categoria: "Premio del público"
+  - nombre: "XXII MUESTRA NACIONAL DE TEATRO AFICIONADO VILLA DE LA SECA (VALLADOLID)"
+    premios:
+      - tipo: "premio"
+        categoria: "Premio del público"
+order: 0
 ---

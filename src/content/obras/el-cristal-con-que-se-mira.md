@@ -4,7 +4,7 @@ description: "Una reflexión sobre cómo la perspectiva personal influye en nues
 status: "anterior"
 coverImage: "/images/galeria/616800b0-7830-4e0b-b2d2-7fb9aec28255/image.jpg"
 genre: "Drama / Comedia"
-order: 3
+order: 6
 ---
 
 ## Sobre la obra

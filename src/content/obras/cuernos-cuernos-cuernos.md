@@ -5,7 +5,7 @@ description: "Una desternillante comedia de enredos donde las infidelidades, los
 status: "anterior"
 coverImage: "/images/galeria/0b8d6518-84b9-4cc2-bc3e-a18892a35984/image.jpg"
 genre: "Comedia de enredos"
-order: 2
+order: 5
 ---
 
 ## Sobre la obra
