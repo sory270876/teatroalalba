@@ -5,7 +5,7 @@ description: "Una comedia negra donde un hombre sube a la cornisa de un edificio
 status: "cartelera"
 coverImage: "/images/galeria/8e986a7c-cff0-48a7-88a1-61a3e6f3e330/image.jpg"
 genre: "Comedia negra"
-order: 6
+order: 0
 ---
 
 ## Sinopsis
