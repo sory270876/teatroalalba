@@ -13,4 +13,5 @@ genre: "Comedia"
 order: 1
 ---
 
-Nueva Obra prueba
+**Sinopsis**
+Y esta sería la *descripcion*
