@@ -7,6 +7,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .tab-active { background-color: #7f1d1d; color: white; }
+    .image-preview { max-width: 150px; max-height: 150px; object-fit: cover; border-radius: 8px; }
+    .gallery-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .gallery-item { position: relative; }
+    .gallery-item .remove-btn { position: absolute; top: -8px; right: -8px; background: #dc2626; color: white; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; cursor: pointer; }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -201,17 +205,35 @@
             <input type="number" name="order" placeholder="0"
               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
           </div>
+
+          <!-- Imagen de portada -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Imagen de portada *</label>
+            <input type="file" id="coverImageFile" accept="image/*"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+            <div id="coverImagePreview" class="mt-2"></div>
+          </div>
+
+          <!-- Galería de imágenes -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Galería de imágenes</label>
+            <input type="file" id="galleryFiles" accept="image/*" multiple
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+            <div id="galleryPreview" class="gallery-preview mt-2"></div>
+          </div>
+
           <input type="hidden" name="originalPath">
           <input type="hidden" name="coverImage">
           <input type="hidden" name="gallery">
           <div class="flex gap-3 pt-4">
-            <button type="submit" class="flex-1 bg-red-800 text-white py-3 rounded-lg hover:bg-red-900 transition">
+            <button type="submit" id="btn-submit-obra" class="flex-1 bg-red-800 text-white py-3 rounded-lg hover:bg-red-900 transition">
               Guardar
             </button>
             <button type="button" onclick="closeModal()" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 transition">
               Cancelar
             </button>
           </div>
+          <p id="upload-status" class="text-sm text-gray-500 text-center hidden">Subiendo imágenes...</p>
         </form>
       </div>
     </div>
@@ -226,6 +248,9 @@
     const REPO = 'sory270876/teatroalalba';
     const BRANCH = 'main';
     let obras = [];
+    let pendingCoverImage = null;
+    let pendingGalleryImages = [];
+    let existingGalleryImages = [];
 
     // Token management
     function getToken() {
@@ -238,7 +263,6 @@
         showLoginError('Por favor, introduce el token');
         return;
       }
-      // Verify token
       fetch('https://api.github.com/user', {
         headers: { 'Authorization': `token ${token}` }
       })
@@ -309,6 +333,34 @@
       return response.ok;
     }
 
+    async function uploadImage(file, folder) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const base64 = reader.result.split(',')[1];
+          const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+          const path = `public/images/${folder}/${filename}`;
+
+          const response = await githubAPI(`/contents/${path}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              message: `Upload image ${filename}`,
+              content: base64,
+              branch: BRANCH
+            })
+          });
+
+          if (response.ok) {
+            resolve(`/images/${folder}/${filename}`);
+          } else {
+            reject(new Error('Error uploading image'));
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
     async function deleteFile(path, sha) {
       const response = await githubAPI(`/contents/${path}`, {
         method: 'DELETE',
@@ -326,16 +378,45 @@
       const match = content.match(/^---\n([\s\S]*?)\n---/);
       if (!match) return {};
       const frontmatter = {};
-      match[1].split('\n').forEach(line => {
-        const [key, ...rest] = line.split(':');
-        if (key && rest.length) {
-          let value = rest.join(':').trim();
-          if (value.startsWith('"') && value.endsWith('"')) {
-            value = value.slice(1, -1);
+      const lines = match[1].split('\n');
+      let currentKey = null;
+      let inArray = false;
+      let arrayItems = [];
+
+      for (const line of lines) {
+        if (line.match(/^\s*-\s/)) {
+          // Array item
+          const value = line.replace(/^\s*-\s*"?/, '').replace(/"?\s*$/, '');
+          arrayItems.push(value);
+        } else if (line.includes(':')) {
+          // Save previous array if any
+          if (currentKey && inArray) {
+            frontmatter[currentKey] = arrayItems;
+            arrayItems = [];
+            inArray = false;
           }
-          frontmatter[key.trim()] = value;
+
+          const [key, ...rest] = line.split(':');
+          const value = rest.join(':').trim();
+          currentKey = key.trim();
+
+          if (value === '') {
+            inArray = true;
+          } else {
+            let cleanValue = value;
+            if (cleanValue.startsWith('"') && cleanValue.endsWith('"')) {
+              cleanValue = cleanValue.slice(1, -1);
+            }
+            frontmatter[currentKey] = cleanValue;
+          }
         }
-      });
+      }
+
+      // Save last array if any
+      if (currentKey && inArray) {
+        frontmatter[currentKey] = arrayItems;
+      }
+
       return frontmatter;
     }
 
@@ -397,20 +478,22 @@
         if (data) {
           const fm = parseFrontmatter(data.content);
           const slug = file.name.replace('.md', '');
-          obras.push({ ...fm, slug, path: file.path, sha: data.sha });
+          obras.push({ ...fm, slug, path: file.path, sha: data.sha, rawContent: data.content });
         }
       }
 
-      // Update select in representacion form
       const select = document.querySelector('#form-representacion select[name="obraSlug"]');
       select.innerHTML = '<option value="">Selecciona una obra...</option>' +
         obras.map(o => `<option value="${o.slug}" data-title="${o.title}">${o.title}</option>`).join('');
 
       list.innerHTML = obras.map(item => `
         <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100">
-          <div>
-            <div class="font-medium text-gray-800">${item.title || 'Sin título'}</div>
-            <div class="text-sm text-gray-600">${item.status === 'cartelera' ? '🎭 En cartelera' : '📁 Anterior'} | ${item.genre || ''}</div>
+          <div class="flex items-center gap-4">
+            <img src="${item.coverImage || '/images/placeholder.jpg'}" class="w-16 h-16 object-cover rounded-lg" onerror="this.src='/images/placeholder.jpg'">
+            <div>
+              <div class="font-medium text-gray-800">${item.title || 'Sin título'}</div>
+              <div class="text-sm text-gray-600">${item.status === 'cartelera' ? '🎭 En cartelera' : '📁 Anterior'} | ${item.genre || ''}</div>
+            </div>
           </div>
           <div class="flex gap-2">
             <button onclick="editObra('${item.path}')"
@@ -420,6 +503,49 @@
           </div>
         </div>
       `).join('');
+    }
+
+    // Image handling
+    document.getElementById('coverImageFile').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        pendingCoverImage = file;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('coverImagePreview').innerHTML =
+            `<img src="${e.target.result}" class="image-preview">`;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    document.getElementById('galleryFiles').addEventListener('change', function(e) {
+      const files = Array.from(e.target.files);
+      files.forEach(file => {
+        pendingGalleryImages.push(file);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const preview = document.getElementById('galleryPreview');
+          const idx = pendingGalleryImages.length - 1 + existingGalleryImages.length;
+          preview.innerHTML += `
+            <div class="gallery-item" data-idx="${idx}" data-type="new">
+              <img src="${e.target.result}" class="image-preview">
+              <button type="button" class="remove-btn" onclick="removeGalleryImage(${idx}, 'new')">&times;</button>
+            </div>
+          `;
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    function removeGalleryImage(idx, type) {
+      if (type === 'new') {
+        const adjustedIdx = idx - existingGalleryImages.length;
+        pendingGalleryImages.splice(adjustedIdx, 1);
+      } else {
+        existingGalleryImages.splice(idx, 1);
+      }
+      document.querySelector(`.gallery-item[data-idx="${idx}"][data-type="${type}"]`)?.remove();
     }
 
     // Forms
@@ -432,11 +558,25 @@
       document.getElementById(`form-${type}`).reset();
       document.querySelector(`#form-${type} input[name="originalPath"]`).value = '';
       document.getElementById('modal-title').textContent = type === 'representacion' ? 'Nueva Representación' : 'Nueva Obra';
+
+      // Reset image state
+      if (type === 'obra') {
+        pendingCoverImage = null;
+        pendingGalleryImages = [];
+        existingGalleryImages = [];
+        document.getElementById('coverImagePreview').innerHTML = '';
+        document.getElementById('galleryPreview').innerHTML = '';
+        document.getElementById('coverImageFile').value = '';
+        document.getElementById('galleryFiles').value = '';
+      }
     }
 
     function closeModal() {
       document.getElementById('modal').classList.add('hidden');
       document.getElementById('modal').classList.remove('flex');
+      pendingCoverImage = null;
+      pendingGalleryImages = [];
+      existingGalleryImages = [];
     }
 
     async function editRepresentacion(path) {
@@ -465,22 +605,47 @@
     }
 
     async function editObra(path) {
-      const data = await getFile(path);
-      if (!data) return;
+      const obra = obras.find(o => o.path === path);
+      if (!obra) return;
 
-      const fm = parseFrontmatter(data.content);
       const form = document.getElementById('form-obra');
 
-      form.querySelector('[name="title"]').value = fm.title || '';
-      form.querySelector('[name="author"]').value = fm.author || '';
-      form.querySelector('[name="description"]').value = fm.description || '';
-      form.querySelector('[name="year"]').value = fm.year || '';
-      form.querySelector('[name="status"]').value = fm.status || 'anterior';
-      form.querySelector('[name="genre"]').value = fm.genre || '';
-      form.querySelector('[name="youtubeId"]').value = fm.youtubeId || '';
-      form.querySelector('[name="order"]').value = fm.order || '';
+      form.querySelector('[name="title"]').value = obra.title || '';
+      form.querySelector('[name="author"]').value = obra.author || '';
+      form.querySelector('[name="description"]').value = obra.description || '';
+      form.querySelector('[name="year"]').value = obra.year || '';
+      form.querySelector('[name="status"]').value = obra.status || 'anterior';
+      form.querySelector('[name="genre"]').value = obra.genre || '';
+      form.querySelector('[name="youtubeId"]').value = obra.youtubeId || '';
+      form.querySelector('[name="order"]').value = obra.order || '';
       form.querySelector('[name="originalPath"]').value = path;
-      form.querySelector('[name="coverImage"]').value = fm.coverImage || '';
+      form.querySelector('[name="coverImage"]').value = obra.coverImage || '';
+
+      // Reset and show existing images
+      pendingCoverImage = null;
+      pendingGalleryImages = [];
+      existingGalleryImages = Array.isArray(obra.gallery) ? [...obra.gallery] : [];
+
+      document.getElementById('coverImageFile').value = '';
+      document.getElementById('galleryFiles').value = '';
+
+      // Show cover preview
+      if (obra.coverImage) {
+        document.getElementById('coverImagePreview').innerHTML =
+          `<img src="${obra.coverImage}" class="image-preview" onerror="this.style.display='none'">
+           <p class="text-xs text-gray-500 mt-1">Imagen actual (selecciona otra para cambiar)</p>`;
+      } else {
+        document.getElementById('coverImagePreview').innerHTML = '';
+      }
+
+      // Show gallery preview
+      const galleryPreview = document.getElementById('galleryPreview');
+      galleryPreview.innerHTML = existingGalleryImages.map((img, idx) => `
+        <div class="gallery-item" data-idx="${idx}" data-type="existing">
+          <img src="${img}" class="image-preview" onerror="this.parentElement.style.display='none'">
+          <button type="button" class="remove-btn" onclick="removeGalleryImage(${idx}, 'existing')">&times;</button>
+        </div>
+      `).join('');
 
       document.getElementById('modal').classList.remove('hidden');
       document.getElementById('modal').classList.add('flex');
@@ -543,35 +708,76 @@ obraSlug: "${data.obraSlug}"${data.event ? `\nevent: "${data.event}"` : ''}${dat
       e.preventDefault();
       const form = e.target;
       const data = Object.fromEntries(new FormData(form));
+      const submitBtn = document.getElementById('btn-submit-obra');
+      const statusEl = document.getElementById('upload-status');
 
-      const coverImage = data.coverImage || '/images/placeholder.jpg';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Guardando...';
+      statusEl.classList.remove('hidden');
 
-      const content = `---
+      try {
+        // Generate folder name from title
+        const folderSlug = data.title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+
+        // Upload cover image if new one selected
+        let coverImagePath = data.coverImage || '/images/placeholder.jpg';
+        if (pendingCoverImage) {
+          statusEl.textContent = 'Subiendo imagen de portada...';
+          coverImagePath = await uploadImage(pendingCoverImage, `obras/${folderSlug}`);
+        }
+
+        // Upload new gallery images
+        let galleryPaths = [...existingGalleryImages];
+        if (pendingGalleryImages.length > 0) {
+          statusEl.textContent = `Subiendo galería (0/${pendingGalleryImages.length})...`;
+          for (let i = 0; i < pendingGalleryImages.length; i++) {
+            statusEl.textContent = `Subiendo galería (${i + 1}/${pendingGalleryImages.length})...`;
+            const path = await uploadImage(pendingGalleryImages[i], `galeria/${folderSlug}`);
+            galleryPaths.push(path);
+          }
+        }
+
+        statusEl.textContent = 'Guardando obra...';
+
+        // Build gallery YAML
+        let galleryYaml = '';
+        if (galleryPaths.length > 0) {
+          galleryYaml = '\ngallery:\n' + galleryPaths.map(p => `  - "${p}"`).join('\n');
+        }
+
+        const content = `---
 title: "${data.title}"${data.author ? `\nauthor: "${data.author}"` : ''}
 description: "${data.description}"${data.year ? `\nyear: ${data.year}` : ''}
 status: "${data.status}"
-coverImage: "${coverImage}"${data.genre ? `\ngenre: "${data.genre}"` : ''}${data.youtubeId ? `\nyoutubeId: "${data.youtubeId}"` : ''}${data.order ? `\norder: ${data.order}` : ''}
+coverImage: "${coverImagePath}"${galleryYaml}${data.genre ? `\ngenre: "${data.genre}"` : ''}${data.youtubeId ? `\nyoutubeId: "${data.youtubeId}"` : ''}${data.order ? `\norder: ${data.order}` : ''}
 ---
 
 ${data.title}
 `;
 
-      const slug = data.title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
-      const filename = `${slug}.md`;
-      const path = data.originalPath || `src/content/obras/${filename}`;
+        const slug = data.title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+        const filename = `${slug}.md`;
+        const path = data.originalPath || `src/content/obras/${filename}`;
 
-      let sha = null;
-      if (data.originalPath) {
-        const existing = await getFile(data.originalPath);
-        sha = existing?.sha;
-      }
+        let sha = null;
+        if (data.originalPath) {
+          const existing = await getFile(data.originalPath);
+          sha = existing?.sha;
+        }
 
-      if (await saveFile(path, content, sha)) {
-        showToast('Guardado correctamente');
-        closeModal();
-        loadObras();
-      } else {
-        alert('Error al guardar');
+        if (await saveFile(path, content, sha)) {
+          showToast('Guardado correctamente');
+          closeModal();
+          loadObras();
+        } else {
+          alert('Error al guardar');
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Guardar';
+        statusEl.classList.add('hidden');
       }
     });
 
