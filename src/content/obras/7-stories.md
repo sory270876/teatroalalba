@@ -1,7 +1,7 @@
 ---
 title: "7 Stories"
 author: "Morris Panych"
-description: "Una comedia negra donde un hombre sube a la cornisa de un edificio de siete pisos con intenciÃÂ³n de saltar, pero sus vecinos, cada uno con sus propios problemas, no paran de interrumpirle con sus dramas personales."
+description: "Una comedia negra donde una mujer sube a la cornisa de un edificio de siete pisos con intenciÃÂÃÂ³n de saltar, pero sus vecinos, cada uno con sus propios problemas, no paran de interrumpirle con sus dramas personales."
 status: "cartelera"
 coverImage: "/images/galeria/8e986a7c-cff0-48a7-88a1-61a3e6f3e330/image.jpg"
 gallery:
@@ -24,7 +24,7 @@ order: 0
 
 **SINOPSIS**
 
-Un hombre decide acabar con su vida saltando desde la cornisa de un edificio de apartamentos. Pero antes de dar el paso definitivo, los residentes de las siete plantas comienzan a aparecer en sus ventanas, cada uno mÃÂ¡s absorto en sus propios problemas que preocupados por el suicida.
+Una mujer decide acabar con su vida saltando desde la cornisa de un edificio de apartamentos. Pero antes de dar el paso definitivo, los residentes de las siete plantas comienzan a aparecer en sus ventanas, cada uno mÃÂÃÂ¡s absorto en sus propios problemas que preocupados por el suicida.
 
 &nbsp;
 
@@ -32,6 +32,6 @@ Un hombre decide acabar con su vida saltando desde la cornisa de un edificio de 
 
 **SOBRE LA OBRA**
 
-"7 Stories" de Morris Panych es una brillante comedia negra que utiliza el humor para explorar temas como la soledad, la incomunicaciÃÂ³n y la indiferencia de la sociedad moderna.
+"7 Stories" de Morris Panych es una brillante comedia negra que utiliza el humor para explorar temas como la soledad, la incomunicaciÃÂÃÂ³n y la indiferencia de la sociedad moderna.
 
-Teatro Al Alba presentÃÂ³ esta obra con un montaje ingenioso que aprovecha las posibilidades escÃÂ©nicas de los diferentes niveles del edificio.
+Teatro Al Alba presentÃÂÃÂ³ esta obra con un montaje ingenioso que aprovecha las posibilidades escÃÂÃÂ©nicas de los diferentes niveles del edificio.
