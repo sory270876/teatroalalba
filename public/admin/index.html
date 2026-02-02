@@ -428,8 +428,6 @@
         const lines = match[1].split('\n');
         const result = {};
         let currentKey = null;
-        let currentArray = null;
-        let currentObject = null;
         let inCertamenes = false;
         let currentCertamen = null;
         let inPremios = false;
@@ -439,42 +437,59 @@
           const indent = line.search(/\S/);
 
           if (indent === 0 && line.includes(':')) {
-            const [key, ...rest] = line.split(':');
-            const value = rest.join(':').trim();
-            currentKey = key.trim();
+            // Match key: "value" or key: value patterns
+            const keyMatch = line.match(/^([^:]+):\s*(.*)$/);
+            if (keyMatch) {
+              currentKey = keyMatch[1].trim();
+              let value = keyMatch[2].trim();
 
-            if (value === '') {
-              if (currentKey === 'certamenes') {
-                result.certamenes = [];
-                inCertamenes = true;
-              } else if (currentKey === 'gallery') {
-                result.gallery = [];
+              if (value === '') {
+                if (currentKey === 'certamenes') {
+                  result.certamenes = [];
+                  inCertamenes = true;
+                } else if (currentKey === 'gallery') {
+                  result.gallery = [];
+                }
+              } else {
+                // Handle quoted strings - extract content between quotes
+                const quotedMatch = value.match(/^["'](.*)["']$/);
+                if (quotedMatch) {
+                  result[currentKey] = quotedMatch[1];
+                } else {
+                  result[currentKey] = value;
+                }
+                inCertamenes = false;
               }
-            } else {
-              let cleanValue = value.replace(/^["']|["']$/g, '');
-              result[currentKey] = cleanValue;
-              inCertamenes = false;
             }
           } else if (line.trim().startsWith('- ') && !inCertamenes) {
             // Simple array item
             if (currentKey === 'gallery') {
-              const val = line.trim().substring(2).replace(/^["']|["']$/g, '');
-              result.gallery.push(val);
+              let val = line.trim().substring(2);
+              const quotedMatch = val.match(/^["'](.*)["']$/);
+              result.gallery.push(quotedMatch ? quotedMatch[1] : val);
             }
           } else if (inCertamenes && line.trim().startsWith('- nombre:')) {
             // New certamen
-            currentCertamen = { nombre: line.split(':')[1].trim().replace(/^["']|["']$/g, ''), premios: [] };
+            let nombre = line.split('nombre:')[1].trim();
+            const quotedMatch = nombre.match(/^["'](.*)["']$/);
+            currentCertamen = { nombre: quotedMatch ? quotedMatch[1] : nombre, premios: [] };
             result.certamenes.push(currentCertamen);
             inPremios = false;
           } else if (inCertamenes && line.trim() === 'premios:') {
             inPremios = true;
           } else if (inCertamenes && inPremios && line.trim().startsWith('- tipo:')) {
-            const premio = { tipo: line.split(':')[1].trim().replace(/^["']|["']$/g, '') };
+            let tipo = line.split('tipo:')[1].trim();
+            const quotedMatch = tipo.match(/^["'](.*)["']$/);
+            const premio = { tipo: quotedMatch ? quotedMatch[1] : tipo };
             currentCertamen.premios.push(premio);
           } else if (inCertamenes && inPremios && line.trim().startsWith('categoria:')) {
-            currentCertamen.premios[currentCertamen.premios.length - 1].categoria = line.split(':')[1].trim().replace(/^["']|["']$/g, '');
+            let cat = line.split('categoria:')[1].trim();
+            const quotedMatch = cat.match(/^["'](.*)["']$/);
+            currentCertamen.premios[currentCertamen.premios.length - 1].categoria = quotedMatch ? quotedMatch[1] : cat;
           } else if (inCertamenes && inPremios && line.trim().startsWith('persona:')) {
-            currentCertamen.premios[currentCertamen.premios.length - 1].persona = line.split(':')[1].trim().replace(/^["']|["']$/g, '');
+            let per = line.split('persona:')[1].trim();
+            const quotedMatch = per.match(/^["'](.*)["']$/);
+            currentCertamen.premios[currentCertamen.premios.length - 1].persona = quotedMatch ? quotedMatch[1] : per;
           }
         }
 
