@@ -11,6 +11,8 @@
     .gallery-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
     .gallery-item { position: relative; }
     .gallery-item .remove-btn { position: absolute; top: -8px; right: -8px; background: #dc2626; color: white; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; cursor: pointer; }
+    .certamen-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+    .premio-item { background: #f9fafb; padding: 8px; border-radius: 4px; margin-top: 8px; }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -48,7 +50,7 @@
 
     <!-- Tabs -->
     <div class="max-w-6xl mx-auto mt-6 px-4">
-      <div class="flex gap-2 mb-6">
+      <div class="flex gap-2 mb-6 flex-wrap">
         <button onclick="showTab('representaciones')" id="tab-representaciones"
           class="px-6 py-2 rounded-lg font-medium tab-active transition">
           Representaciones
@@ -56,6 +58,10 @@
         <button onclick="showTab('obras')" id="tab-obras"
           class="px-6 py-2 rounded-lg font-medium bg-gray-200 hover:bg-gray-300 transition">
           Obras
+        </button>
+        <button onclick="showTab('premios')" id="tab-premios"
+          class="px-6 py-2 rounded-lg font-medium bg-gray-200 hover:bg-gray-300 transition">
+          Premios
         </button>
       </div>
 
@@ -83,6 +89,20 @@
           </button>
         </div>
         <div id="obras-list" class="space-y-2">
+          <p class="text-gray-500">Cargando...</p>
+        </div>
+      </div>
+
+      <!-- Premios Tab -->
+      <div id="content-premios" class="bg-white rounded-lg shadow-lg p-6 hidden">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold text-gray-800">Premios por Obra</h2>
+          <button onclick="showForm('premio')"
+            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+            + Añadir Premios a Obra
+          </button>
+        </div>
+        <div id="premios-list" class="space-y-2">
           <p class="text-gray-500">Cargando...</p>
         </div>
       </div>
@@ -205,23 +225,18 @@
             <input type="number" name="order" placeholder="0"
               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
           </div>
-
-          <!-- Imagen de portada -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Imagen de portada *</label>
             <input type="file" id="coverImageFile" accept="image/*"
               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
             <div id="coverImagePreview" class="mt-2"></div>
           </div>
-
-          <!-- Galería de imágenes -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Galería de imágenes</label>
             <input type="file" id="galleryFiles" accept="image/*" multiple
               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
             <div id="galleryPreview" class="gallery-preview mt-2"></div>
           </div>
-
           <input type="hidden" name="originalPath">
           <input type="hidden" name="coverImage">
           <input type="hidden" name="gallery">
@@ -234,6 +249,35 @@
             </button>
           </div>
           <p id="upload-status" class="text-sm text-gray-500 text-center hidden">Subiendo imágenes...</p>
+        </form>
+
+        <!-- Premio Form -->
+        <form id="form-premio" class="space-y-4 hidden">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Obra *</label>
+            <select name="obraSlug" required id="premio-obra-select" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+              <option value="">Selecciona una obra...</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Certámenes y Premios</label>
+            <div id="certamenes-container"></div>
+            <button type="button" onclick="addCertamen()" class="mt-2 text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+              + Añadir Certamen
+            </button>
+          </div>
+
+          <input type="hidden" name="originalPath">
+          <input type="hidden" name="order">
+          <div class="flex gap-3 pt-4">
+            <button type="submit" class="flex-1 bg-red-800 text-white py-3 rounded-lg hover:bg-red-900 transition">
+              Guardar
+            </button>
+            <button type="button" onclick="closeModal()" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 transition">
+              Cancelar
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -248,9 +292,11 @@
     const REPO = 'sory270876/teatroalalba';
     const BRANCH = 'main';
     let obras = [];
+    let premiosData = [];
     let pendingCoverImage = null;
     let pendingGalleryImages = [];
     let existingGalleryImages = [];
+    let certamenCounter = 0;
 
     // Token management
     function getToken() {
@@ -373,51 +419,70 @@
       return response.ok;
     }
 
-    // Parse frontmatter
+    // Parse YAML frontmatter (improved for nested structures)
     function parseFrontmatter(content) {
       const match = content.match(/^---\n([\s\S]*?)\n---/);
       if (!match) return {};
-      const frontmatter = {};
-      const lines = match[1].split('\n');
-      let currentKey = null;
-      let inArray = false;
-      let arrayItems = [];
 
-      for (const line of lines) {
-        if (line.match(/^\s*-\s/)) {
-          // Array item
-          const value = line.replace(/^\s*-\s*"?/, '').replace(/"?\s*$/, '');
-          arrayItems.push(value);
-        } else if (line.includes(':')) {
-          // Save previous array if any
-          if (currentKey && inArray) {
-            frontmatter[currentKey] = arrayItems;
-            arrayItems = [];
-            inArray = false;
-          }
+      try {
+        const lines = match[1].split('\n');
+        const result = {};
+        let currentKey = null;
+        let currentArray = null;
+        let currentObject = null;
+        let inCertamenes = false;
+        let currentCertamen = null;
+        let inPremios = false;
 
-          const [key, ...rest] = line.split(':');
-          const value = rest.join(':').trim();
-          currentKey = key.trim();
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          const indent = line.search(/\S/);
 
-          if (value === '') {
-            inArray = true;
-          } else {
-            let cleanValue = value;
-            if (cleanValue.startsWith('"') && cleanValue.endsWith('"')) {
-              cleanValue = cleanValue.slice(1, -1);
+          if (indent === 0 && line.includes(':')) {
+            const [key, ...rest] = line.split(':');
+            const value = rest.join(':').trim();
+            currentKey = key.trim();
+
+            if (value === '') {
+              if (currentKey === 'certamenes') {
+                result.certamenes = [];
+                inCertamenes = true;
+              } else if (currentKey === 'gallery') {
+                result.gallery = [];
+              }
+            } else {
+              let cleanValue = value.replace(/^["']|["']$/g, '');
+              result[currentKey] = cleanValue;
+              inCertamenes = false;
             }
-            frontmatter[currentKey] = cleanValue;
+          } else if (line.trim().startsWith('- ') && !inCertamenes) {
+            // Simple array item
+            if (currentKey === 'gallery') {
+              const val = line.trim().substring(2).replace(/^["']|["']$/g, '');
+              result.gallery.push(val);
+            }
+          } else if (inCertamenes && line.trim().startsWith('- nombre:')) {
+            // New certamen
+            currentCertamen = { nombre: line.split(':')[1].trim().replace(/^["']|["']$/g, ''), premios: [] };
+            result.certamenes.push(currentCertamen);
+            inPremios = false;
+          } else if (inCertamenes && line.trim() === 'premios:') {
+            inPremios = true;
+          } else if (inCertamenes && inPremios && line.trim().startsWith('- tipo:')) {
+            const premio = { tipo: line.split(':')[1].trim().replace(/^["']|["']$/g, '') };
+            currentCertamen.premios.push(premio);
+          } else if (inCertamenes && inPremios && line.trim().startsWith('categoria:')) {
+            currentCertamen.premios[currentCertamen.premios.length - 1].categoria = line.split(':')[1].trim().replace(/^["']|["']$/g, '');
+          } else if (inCertamenes && inPremios && line.trim().startsWith('persona:')) {
+            currentCertamen.premios[currentCertamen.premios.length - 1].persona = line.split(':')[1].trim().replace(/^["']|["']$/g, '');
           }
         }
-      }
 
-      // Save last array if any
-      if (currentKey && inArray) {
-        frontmatter[currentKey] = arrayItems;
+        return result;
+      } catch (e) {
+        console.error('Error parsing frontmatter:', e);
+        return {};
       }
-
-      return frontmatter;
     }
 
     // Load data
@@ -453,7 +518,7 @@
               class="text-blue-600 hover:text-blue-800 px-3 py-1 rounded border border-blue-600 hover:bg-blue-50">
               Editar
             </button>
-            <button onclick="deleteRepresentacion('${item.path}', '${item.sha}')"
+            <button onclick="deleteItem('${item.path}', '${item.sha}', 'representación', loadRepresentaciones)"
               class="text-red-600 hover:text-red-800 px-3 py-1 rounded border border-red-600 hover:bg-red-50">
               Eliminar
             </button>
@@ -482,9 +547,13 @@
         }
       }
 
-      const select = document.querySelector('#form-representacion select[name="obraSlug"]');
-      select.innerHTML = '<option value="">Selecciona una obra...</option>' +
-        obras.map(o => `<option value="${o.slug}" data-title="${o.title}">${o.title}</option>`).join('');
+      // Update selects
+      const selectRep = document.querySelector('#form-representacion select[name="obraSlug"]');
+      const selectPremio = document.getElementById('premio-obra-select');
+      const options = '<option value="">Selecciona una obra...</option>' +
+        obras.map(o => `<option value="${o.slug}" data-title="${o.title}" data-image="${o.coverImage || ''}">${o.title}</option>`).join('');
+      selectRep.innerHTML = options;
+      selectPremio.innerHTML = options;
 
       list.innerHTML = obras.map(item => `
         <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100">
@@ -500,9 +569,70 @@
               class="text-blue-600 hover:text-blue-800 px-3 py-1 rounded border border-blue-600 hover:bg-blue-50">
               Editar
             </button>
+            <button onclick="deleteItem('${item.path}', '${item.sha}', 'obra', loadObras)"
+              class="text-red-600 hover:text-red-800 px-3 py-1 rounded border border-red-600 hover:bg-red-50">
+              Eliminar
+            </button>
           </div>
         </div>
       `).join('');
+    }
+
+    async function loadPremios() {
+      const files = await getFiles('src/content/premios');
+      const list = document.getElementById('premios-list');
+      premiosData = [];
+
+      if (!files.length) {
+        list.innerHTML = '<p class="text-gray-500">No hay premios registrados</p>';
+        return;
+      }
+
+      for (const file of files) {
+        if (!file.name.endsWith('.md')) continue;
+        const data = await getFile(file.path);
+        if (data) {
+          const fm = parseFrontmatter(data.content);
+          premiosData.push({ ...fm, path: file.path, sha: data.sha });
+        }
+      }
+
+      list.innerHTML = premiosData.map(item => {
+        const totalPremios = (item.certamenes || []).reduce((acc, c) => acc + (c.premios || []).length, 0);
+        return `
+          <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100">
+            <div class="flex items-center gap-4">
+              <img src="${item.obraImage || '/images/placeholder.jpg'}" class="w-16 h-16 object-cover rounded-lg" onerror="this.src='/images/placeholder.jpg'">
+              <div>
+                <div class="font-medium text-gray-800">${item.obra || 'Sin obra'}</div>
+                <div class="text-sm text-gray-600">🏆 ${totalPremios} premios en ${(item.certamenes || []).length} certámenes</div>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="editPremio('${item.path}')"
+                class="text-blue-600 hover:text-blue-800 px-3 py-1 rounded border border-blue-600 hover:bg-blue-50">
+                Editar
+              </button>
+              <button onclick="deleteItem('${item.path}', '${item.sha}', 'premios', loadPremios)"
+                class="text-red-600 hover:text-red-800 px-3 py-1 rounded border border-red-600 hover:bg-red-50">
+                Eliminar
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Delete function
+    async function deleteItem(path, sha, tipo, reloadFn) {
+      if (!confirm(`¿Seguro que quieres eliminar esta ${tipo}?`)) return;
+
+      if (await deleteFile(path, sha)) {
+        showToast('Eliminado correctamente');
+        reloadFn();
+      } else {
+        alert('Error al eliminar');
+      }
     }
 
     // Image handling
@@ -548,19 +678,92 @@
       document.querySelector(`.gallery-item[data-idx="${idx}"][data-type="${type}"]`)?.remove();
     }
 
+    // Certamenes/Premios handling
+    function addCertamen(certamen = null) {
+      const container = document.getElementById('certamenes-container');
+      const id = certamenCounter++;
+
+      const div = document.createElement('div');
+      div.className = 'certamen-item';
+      div.id = `certamen-${id}`;
+      div.innerHTML = `
+        <div class="flex justify-between items-center mb-2">
+          <input type="text" placeholder="Nombre del certamen" class="certamen-nombre flex-1 px-3 py-2 border rounded-lg" value="${certamen?.nombre || ''}">
+          <button type="button" onclick="removeCertamen(${id})" class="ml-2 text-red-600 hover:text-red-800">✕</button>
+        </div>
+        <div class="premios-container" id="premios-${id}"></div>
+        <button type="button" onclick="addPremio(${id})" class="mt-2 text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300">
+          + Añadir premio
+        </button>
+      `;
+      container.appendChild(div);
+
+      if (certamen?.premios) {
+        certamen.premios.forEach(p => addPremio(id, p));
+      }
+    }
+
+    function removeCertamen(id) {
+      document.getElementById(`certamen-${id}`)?.remove();
+    }
+
+    function addPremio(certamenId, premio = null) {
+      const container = document.getElementById(`premios-${certamenId}`);
+      const div = document.createElement('div');
+      div.className = 'premio-item flex gap-2 items-center';
+      div.innerHTML = `
+        <select class="premio-tipo px-2 py-1 border rounded text-sm">
+          <option value="premio" ${premio?.tipo === 'premio' ? 'selected' : ''}>Premio</option>
+          <option value="nominacion" ${premio?.tipo === 'nominacion' ? 'selected' : ''}>Nominación</option>
+          <option value="mencion" ${premio?.tipo === 'mencion' ? 'selected' : ''}>Mención</option>
+        </select>
+        <input type="text" placeholder="Categoría" class="premio-categoria flex-1 px-2 py-1 border rounded text-sm" value="${premio?.categoria || ''}">
+        <input type="text" placeholder="Persona (opc)" class="premio-persona px-2 py-1 border rounded text-sm w-32" value="${premio?.persona || ''}">
+        <button type="button" onclick="this.parentElement.remove()" class="text-red-600 text-sm">✕</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function getCertamenesData() {
+      const certamenes = [];
+      document.querySelectorAll('.certamen-item').forEach(certamenEl => {
+        const nombre = certamenEl.querySelector('.certamen-nombre').value.trim();
+        if (!nombre) return;
+
+        const premios = [];
+        certamenEl.querySelectorAll('.premio-item').forEach(premioEl => {
+          const tipo = premioEl.querySelector('.premio-tipo').value;
+          const categoria = premioEl.querySelector('.premio-categoria').value.trim();
+          const persona = premioEl.querySelector('.premio-persona').value.trim();
+          if (categoria) {
+            premios.push({ tipo, categoria, persona: persona || null });
+          }
+        });
+
+        if (premios.length > 0) {
+          certamenes.push({ nombre, premios });
+        }
+      });
+      return certamenes;
+    }
+
     // Forms
     function showForm(type) {
       document.getElementById('modal').classList.remove('hidden');
       document.getElementById('modal').classList.add('flex');
       document.getElementById('form-representacion').classList.add('hidden');
       document.getElementById('form-obra').classList.add('hidden');
+      document.getElementById('form-premio').classList.add('hidden');
       document.getElementById(`form-${type}`).classList.remove('hidden');
       document.getElementById(`form-${type}`).reset();
-      document.querySelector(`#form-${type} input[name="originalPath"]`).value = '';
-      document.getElementById('modal-title').textContent = type === 'representacion' ? 'Nueva Representación' : 'Nueva Obra';
 
-      // Reset image state
-      if (type === 'obra') {
+      const originalPathInput = document.querySelector(`#form-${type} input[name="originalPath"]`);
+      if (originalPathInput) originalPathInput.value = '';
+
+      if (type === 'representacion') {
+        document.getElementById('modal-title').textContent = 'Nueva Representación';
+      } else if (type === 'obra') {
+        document.getElementById('modal-title').textContent = 'Nueva Obra';
         pendingCoverImage = null;
         pendingGalleryImages = [];
         existingGalleryImages = [];
@@ -568,6 +771,11 @@
         document.getElementById('galleryPreview').innerHTML = '';
         document.getElementById('coverImageFile').value = '';
         document.getElementById('galleryFiles').value = '';
+      } else if (type === 'premio') {
+        document.getElementById('modal-title').textContent = 'Añadir Premios a Obra';
+        document.getElementById('certamenes-container').innerHTML = '';
+        certamenCounter = 0;
+        addCertamen();
       }
     }
 
@@ -601,6 +809,7 @@
       document.getElementById('modal').classList.add('flex');
       document.getElementById('form-representacion').classList.remove('hidden');
       document.getElementById('form-obra').classList.add('hidden');
+      document.getElementById('form-premio').classList.add('hidden');
       document.getElementById('modal-title').textContent = 'Editar Representación';
     }
 
@@ -621,7 +830,6 @@
       form.querySelector('[name="originalPath"]').value = path;
       form.querySelector('[name="coverImage"]').value = obra.coverImage || '';
 
-      // Reset and show existing images
       pendingCoverImage = null;
       pendingGalleryImages = [];
       existingGalleryImages = Array.isArray(obra.gallery) ? [...obra.gallery] : [];
@@ -629,16 +837,14 @@
       document.getElementById('coverImageFile').value = '';
       document.getElementById('galleryFiles').value = '';
 
-      // Show cover preview
       if (obra.coverImage) {
         document.getElementById('coverImagePreview').innerHTML =
           `<img src="${obra.coverImage}" class="image-preview" onerror="this.style.display='none'">
-           <p class="text-xs text-gray-500 mt-1">Imagen actual (selecciona otra para cambiar)</p>`;
+           <p class="text-xs text-gray-500 mt-1">Imagen actual</p>`;
       } else {
         document.getElementById('coverImagePreview').innerHTML = '';
       }
 
-      // Show gallery preview
       const galleryPreview = document.getElementById('galleryPreview');
       galleryPreview.innerHTML = existingGalleryImages.map((img, idx) => `
         <div class="gallery-item" data-idx="${idx}" data-type="existing">
@@ -651,18 +857,34 @@
       document.getElementById('modal').classList.add('flex');
       document.getElementById('form-obra').classList.remove('hidden');
       document.getElementById('form-representacion').classList.add('hidden');
+      document.getElementById('form-premio').classList.add('hidden');
       document.getElementById('modal-title').textContent = 'Editar Obra';
     }
 
-    async function deleteRepresentacion(path, sha) {
-      if (!confirm('¿Seguro que quieres eliminar esta representación?')) return;
+    async function editPremio(path) {
+      const premio = premiosData.find(p => p.path === path);
+      if (!premio) return;
 
-      if (await deleteFile(path, sha)) {
-        showToast('Eliminado correctamente');
-        loadRepresentaciones();
+      const form = document.getElementById('form-premio');
+      form.querySelector('[name="obraSlug"]').value = premio.obraSlug || '';
+      form.querySelector('[name="originalPath"]').value = path;
+      form.querySelector('[name="order"]').value = premio.order || '';
+
+      document.getElementById('certamenes-container').innerHTML = '';
+      certamenCounter = 0;
+
+      if (premio.certamenes && premio.certamenes.length > 0) {
+        premio.certamenes.forEach(c => addCertamen(c));
       } else {
-        alert('Error al eliminar');
+        addCertamen();
       }
+
+      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('modal').classList.add('flex');
+      document.getElementById('form-premio').classList.remove('hidden');
+      document.getElementById('form-representacion').classList.add('hidden');
+      document.getElementById('form-obra').classList.add('hidden');
+      document.getElementById('modal-title').textContent = 'Editar Premios';
     }
 
     // Form submissions
@@ -716,20 +938,16 @@ obraSlug: "${data.obraSlug}"${data.event ? `\nevent: "${data.event}"` : ''}${dat
       statusEl.classList.remove('hidden');
 
       try {
-        // Generate folder name from title
         const folderSlug = data.title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
 
-        // Upload cover image if new one selected
         let coverImagePath = data.coverImage || '/images/placeholder.jpg';
         if (pendingCoverImage) {
           statusEl.textContent = 'Subiendo imagen de portada...';
           coverImagePath = await uploadImage(pendingCoverImage, `obras/${folderSlug}`);
         }
 
-        // Upload new gallery images
         let galleryPaths = [...existingGalleryImages];
         if (pendingGalleryImages.length > 0) {
-          statusEl.textContent = `Subiendo galería (0/${pendingGalleryImages.length})...`;
           for (let i = 0; i < pendingGalleryImages.length; i++) {
             statusEl.textContent = `Subiendo galería (${i + 1}/${pendingGalleryImages.length})...`;
             const path = await uploadImage(pendingGalleryImages[i], `galeria/${folderSlug}`);
@@ -739,7 +957,6 @@ obraSlug: "${data.obraSlug}"${data.event ? `\nevent: "${data.event}"` : ''}${dat
 
         statusEl.textContent = 'Guardando obra...';
 
-        // Build gallery YAML
         let galleryYaml = '';
         if (galleryPaths.length > 0) {
           galleryYaml = '\ngallery:\n' + galleryPaths.map(p => `  - "${p}"`).join('\n');
@@ -781,6 +998,62 @@ ${data.title}
       }
     });
 
+    document.getElementById('form-premio').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form));
+
+      const obraOption = form.querySelector(`select[name="obraSlug"] option[value="${data.obraSlug}"]`);
+      const obraTitle = obraOption ? obraOption.dataset.title : data.obraSlug;
+      const obraImage = obraOption ? obraOption.dataset.image : '';
+
+      const certamenes = getCertamenesData();
+
+      if (certamenes.length === 0) {
+        alert('Añade al menos un certamen con premios');
+        return;
+      }
+
+      // Build YAML for certamenes
+      let certamenesYaml = 'certamenes:\n';
+      certamenes.forEach(c => {
+        certamenesYaml += `  - nombre: "${c.nombre}"\n`;
+        certamenesYaml += `    premios:\n`;
+        c.premios.forEach(p => {
+          certamenesYaml += `      - tipo: "${p.tipo}"\n`;
+          certamenesYaml += `        categoria: "${p.categoria}"\n`;
+          if (p.persona) {
+            certamenesYaml += `        persona: "${p.persona}"\n`;
+          }
+        });
+      });
+
+      const content = `---
+obra: "${obraTitle}"
+obraSlug: "${data.obraSlug}"
+obraImage: "${obraImage}"${data.order ? `\norder: ${data.order}` : ''}
+${certamenesYaml}---
+`;
+
+      const slug = data.obraSlug;
+      const filename = `${slug}.md`;
+      const path = data.originalPath || `src/content/premios/${filename}`;
+
+      let sha = null;
+      if (data.originalPath) {
+        const existing = await getFile(data.originalPath);
+        sha = existing?.sha;
+      }
+
+      if (await saveFile(path, content, sha)) {
+        showToast('Guardado correctamente');
+        closeModal();
+        loadPremios();
+      } else {
+        alert('Error al guardar');
+      }
+    });
+
     // UI helpers
     function showTab(tab) {
       document.querySelectorAll('[id^="content-"]').forEach(el => el.classList.add('hidden'));
@@ -813,6 +1086,7 @@ ${data.title}
         document.getElementById('admin-panel').classList.remove('hidden');
         loadObras();
         loadRepresentaciones();
+        loadPremios();
       }
     }
 
