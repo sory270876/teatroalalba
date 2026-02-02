@@ -1,11 +1,616 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Panel de Administración - Teatro Al Alba</title>
-  </head>
-  <body>
-    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
-  </body>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración - Teatro Al Alba</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .tab-active { background-color: #7f1d1d; color: white; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <!-- Login Section -->
+  <div id="login-section" class="min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
+      <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">Panel de Administración</h1>
+      <p class="text-gray-600 mb-4 text-sm">
+        Para usar el panel necesitas un token de GitHub.
+        <a href="https://github.com/settings/tokens/new?description=Teatro%20Al%20Alba%20Admin&scopes=repo" target="_blank" class="text-red-700 underline">Crear token aquí</a>
+        (marca solo "repo" y genera).
+      </p>
+      <input type="password" id="token-input" placeholder="Pega tu token aquí"
+        class="w-full px-4 py-3 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-red-600">
+      <button onclick="saveToken()"
+        class="w-full bg-red-800 text-white py-3 rounded-lg hover:bg-red-900 transition">
+        Entrar
+      </button>
+      <p id="login-error" class="text-red-600 mt-2 text-sm hidden"></p>
+    </div>
+  </div>
+
+  <!-- Admin Panel -->
+  <div id="admin-panel" class="hidden">
+    <!-- Header -->
+    <header class="bg-red-900 text-white py-4 px-6 shadow-lg">
+      <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <h1 class="text-xl font-bold">Teatro Al Alba - Admin</h1>
+        <div class="flex gap-4 items-center">
+          <a href="https://www.teatroalalba.es" target="_blank" class="text-sm hover:underline">Ver web</a>
+          <button onclick="logout()" class="text-sm bg-red-800 px-3 py-1 rounded hover:bg-red-700">Salir</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Tabs -->
+    <div class="max-w-6xl mx-auto mt-6 px-4">
+      <div class="flex gap-2 mb-6">
+        <button onclick="showTab('representaciones')" id="tab-representaciones"
+          class="px-6 py-2 rounded-lg font-medium tab-active transition">
+          Representaciones
+        </button>
+        <button onclick="showTab('obras')" id="tab-obras"
+          class="px-6 py-2 rounded-lg font-medium bg-gray-200 hover:bg-gray-300 transition">
+          Obras
+        </button>
+      </div>
+
+      <!-- Representaciones Tab -->
+      <div id="content-representaciones" class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold text-gray-800">Representaciones</h2>
+          <button onclick="showForm('representacion')"
+            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+            + Nueva Representación
+          </button>
+        </div>
+        <div id="representaciones-list" class="space-y-2">
+          <p class="text-gray-500">Cargando...</p>
+        </div>
+      </div>
+
+      <!-- Obras Tab -->
+      <div id="content-obras" class="bg-white rounded-lg shadow-lg p-6 hidden">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold text-gray-800">Obras</h2>
+          <button onclick="showForm('obra')"
+            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+            + Nueva Obra
+          </button>
+        </div>
+        <div id="obras-list" class="space-y-2">
+          <p class="text-gray-500">Cargando...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Form -->
+  <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h3 id="modal-title" class="text-xl font-bold text-gray-800">Nuevo</h3>
+          <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+        </div>
+
+        <!-- Representacion Form -->
+        <form id="form-representacion" class="space-y-4 hidden">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
+              <input type="date" name="date" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Hora *</label>
+              <input type="time" name="time" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Obra *</label>
+            <select name="obraSlug" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+              <option value="">Selecciona una obra...</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Lugar/Teatro *</label>
+            <input type="text" name="venue" required placeholder="Ej: Teatro Municipal"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Ciudad *</label>
+              <input type="text" name="city" required placeholder="Ej: Getafe"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Provincia *</label>
+              <input type="text" name="province" required placeholder="Ej: Madrid"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Evento/Festival (opcional)</label>
+            <input type="text" name="event" placeholder="Ej: Festival de Teatro Amateur"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">URL de entradas (opcional)</label>
+            <input type="url" name="ticketUrl" placeholder="https://..."
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Precio (opcional)</label>
+            <input type="text" name="price" placeholder="Ej: 10€ / Gratuito"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+          </div>
+          <input type="hidden" name="originalPath">
+          <div class="flex gap-3 pt-4">
+            <button type="submit" class="flex-1 bg-red-800 text-white py-3 rounded-lg hover:bg-red-900 transition">
+              Guardar
+            </button>
+            <button type="button" onclick="closeModal()" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 transition">
+              Cancelar
+            </button>
+          </div>
+        </form>
+
+        <!-- Obra Form -->
+        <form id="form-obra" class="space-y-4 hidden">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+            <input type="text" name="title" required placeholder="Ej: 7 Stories"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Autor</label>
+            <input type="text" name="author" placeholder="Ej: Morris Panych"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Descripción corta *</label>
+            <textarea name="description" required rows="3" placeholder="Breve descripción de la obra..."
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600"></textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Año</label>
+              <input type="number" name="year" placeholder="2025"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Estado *</label>
+              <select name="status" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+                <option value="cartelera">En cartelera</option>
+                <option value="anterior">Obra anterior</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Género</label>
+            <input type="text" name="genre" placeholder="Ej: Comedia, Drama..."
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">ID de YouTube (opcional)</label>
+            <input type="text" name="youtubeId" placeholder="Ej: Mco1GdXSzFs"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Orden (menor = primero)</label>
+            <input type="number" name="order" placeholder="0"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-600">
+          </div>
+          <input type="hidden" name="originalPath">
+          <input type="hidden" name="coverImage">
+          <input type="hidden" name="gallery">
+          <div class="flex gap-3 pt-4">
+            <button type="submit" class="flex-1 bg-red-800 text-white py-3 rounded-lg hover:bg-red-900 transition">
+              Guardar
+            </button>
+            <button type="button" onclick="closeModal()" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 transition">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg hidden">
+    Guardado correctamente
+  </div>
+
+  <script>
+    const REPO = 'sory270876/teatroalalba';
+    const BRANCH = 'main';
+    let obras = [];
+
+    // Token management
+    function getToken() {
+      return localStorage.getItem('github_token');
+    }
+
+    function saveToken() {
+      const token = document.getElementById('token-input').value.trim();
+      if (!token) {
+        showLoginError('Por favor, introduce el token');
+        return;
+      }
+      // Verify token
+      fetch('https://api.github.com/user', {
+        headers: { 'Authorization': `token ${token}` }
+      })
+      .then(r => {
+        if (r.ok) {
+          localStorage.setItem('github_token', token);
+          init();
+        } else {
+          showLoginError('Token inválido. Asegúrate de copiar el token completo.');
+        }
+      })
+      .catch(() => showLoginError('Error de conexión'));
+    }
+
+    function showLoginError(msg) {
+      const el = document.getElementById('login-error');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    function logout() {
+      localStorage.removeItem('github_token');
+      location.reload();
+    }
+
+    // API calls
+    async function githubAPI(endpoint, options = {}) {
+      const token = getToken();
+      const response = await fetch(`https://api.github.com/repos/${REPO}${endpoint}`, {
+        ...options,
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          ...options.headers
+        }
+      });
+      return response;
+    }
+
+    async function getFiles(path) {
+      const response = await githubAPI(`/contents/${path}?ref=${BRANCH}`);
+      if (!response.ok) return [];
+      return response.json();
+    }
+
+    async function getFile(path) {
+      const response = await githubAPI(`/contents/${path}?ref=${BRANCH}`);
+      if (!response.ok) return null;
+      const data = await response.json();
+      return {
+        content: atob(data.content),
+        sha: data.sha
+      };
+    }
+
+    async function saveFile(path, content, sha = null) {
+      const body = {
+        message: `Update ${path} via admin panel`,
+        content: btoa(unescape(encodeURIComponent(content))),
+        branch: BRANCH
+      };
+      if (sha) body.sha = sha;
+
+      const response = await githubAPI(`/contents/${path}`, {
+        method: 'PUT',
+        body: JSON.stringify(body)
+      });
+      return response.ok;
+    }
+
+    async function deleteFile(path, sha) {
+      const response = await githubAPI(`/contents/${path}`, {
+        method: 'DELETE',
+        body: JSON.stringify({
+          message: `Delete ${path} via admin panel`,
+          sha: sha,
+          branch: BRANCH
+        })
+      });
+      return response.ok;
+    }
+
+    // Parse frontmatter
+    function parseFrontmatter(content) {
+      const match = content.match(/^---\n([\s\S]*?)\n---/);
+      if (!match) return {};
+      const frontmatter = {};
+      match[1].split('\n').forEach(line => {
+        const [key, ...rest] = line.split(':');
+        if (key && rest.length) {
+          let value = rest.join(':').trim();
+          if (value.startsWith('"') && value.endsWith('"')) {
+            value = value.slice(1, -1);
+          }
+          frontmatter[key.trim()] = value;
+        }
+      });
+      return frontmatter;
+    }
+
+    // Load data
+    async function loadRepresentaciones() {
+      const files = await getFiles('src/content/representaciones');
+      const list = document.getElementById('representaciones-list');
+
+      if (!files.length) {
+        list.innerHTML = '<p class="text-gray-500">No hay representaciones</p>';
+        return;
+      }
+
+      const items = [];
+      for (const file of files) {
+        if (!file.name.endsWith('.md')) continue;
+        const data = await getFile(file.path);
+        if (data) {
+          const fm = parseFrontmatter(data.content);
+          items.push({ ...fm, path: file.path, sha: data.sha });
+        }
+      }
+
+      items.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      list.innerHTML = items.map(item => `
+        <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100">
+          <div>
+            <div class="font-medium text-gray-800">${item.obra || 'Sin obra'}</div>
+            <div class="text-sm text-gray-600">${formatDate(item.date)} - ${item.time || ''} | ${item.venue || ''}, ${item.city || ''}</div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="editRepresentacion('${item.path}')"
+              class="text-blue-600 hover:text-blue-800 px-3 py-1 rounded border border-blue-600 hover:bg-blue-50">
+              Editar
+            </button>
+            <button onclick="deleteRepresentacion('${item.path}', '${item.sha}')"
+              class="text-red-600 hover:text-red-800 px-3 py-1 rounded border border-red-600 hover:bg-red-50">
+              Eliminar
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function loadObras() {
+      const files = await getFiles('src/content/obras');
+      const list = document.getElementById('obras-list');
+      obras = [];
+
+      if (!files.length) {
+        list.innerHTML = '<p class="text-gray-500">No hay obras</p>';
+        return;
+      }
+
+      for (const file of files) {
+        if (!file.name.endsWith('.md')) continue;
+        const data = await getFile(file.path);
+        if (data) {
+          const fm = parseFrontmatter(data.content);
+          const slug = file.name.replace('.md', '');
+          obras.push({ ...fm, slug, path: file.path, sha: data.sha });
+        }
+      }
+
+      // Update select in representacion form
+      const select = document.querySelector('#form-representacion select[name="obraSlug"]');
+      select.innerHTML = '<option value="">Selecciona una obra...</option>' +
+        obras.map(o => `<option value="${o.slug}" data-title="${o.title}">${o.title}</option>`).join('');
+
+      list.innerHTML = obras.map(item => `
+        <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100">
+          <div>
+            <div class="font-medium text-gray-800">${item.title || 'Sin título'}</div>
+            <div class="text-sm text-gray-600">${item.status === 'cartelera' ? '🎭 En cartelera' : '📁 Anterior'} | ${item.genre || ''}</div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="editObra('${item.path}')"
+              class="text-blue-600 hover:text-blue-800 px-3 py-1 rounded border border-blue-600 hover:bg-blue-50">
+              Editar
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Forms
+    function showForm(type) {
+      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('modal').classList.add('flex');
+      document.getElementById('form-representacion').classList.add('hidden');
+      document.getElementById('form-obra').classList.add('hidden');
+      document.getElementById(`form-${type}`).classList.remove('hidden');
+      document.getElementById(`form-${type}`).reset();
+      document.querySelector(`#form-${type} input[name="originalPath"]`).value = '';
+      document.getElementById('modal-title').textContent = type === 'representacion' ? 'Nueva Representación' : 'Nueva Obra';
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.add('hidden');
+      document.getElementById('modal').classList.remove('flex');
+    }
+
+    async function editRepresentacion(path) {
+      const data = await getFile(path);
+      if (!data) return;
+
+      const fm = parseFrontmatter(data.content);
+      const form = document.getElementById('form-representacion');
+
+      form.querySelector('[name="date"]').value = fm.date || '';
+      form.querySelector('[name="time"]').value = fm.time || '';
+      form.querySelector('[name="venue"]').value = fm.venue || '';
+      form.querySelector('[name="city"]').value = fm.city || '';
+      form.querySelector('[name="province"]').value = fm.province || '';
+      form.querySelector('[name="obraSlug"]').value = fm.obraSlug || '';
+      form.querySelector('[name="event"]').value = fm.event || '';
+      form.querySelector('[name="ticketUrl"]').value = fm.ticketUrl || '';
+      form.querySelector('[name="price"]').value = fm.price || '';
+      form.querySelector('[name="originalPath"]').value = path;
+
+      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('modal').classList.add('flex');
+      document.getElementById('form-representacion').classList.remove('hidden');
+      document.getElementById('form-obra').classList.add('hidden');
+      document.getElementById('modal-title').textContent = 'Editar Representación';
+    }
+
+    async function editObra(path) {
+      const data = await getFile(path);
+      if (!data) return;
+
+      const fm = parseFrontmatter(data.content);
+      const form = document.getElementById('form-obra');
+
+      form.querySelector('[name="title"]').value = fm.title || '';
+      form.querySelector('[name="author"]').value = fm.author || '';
+      form.querySelector('[name="description"]').value = fm.description || '';
+      form.querySelector('[name="year"]').value = fm.year || '';
+      form.querySelector('[name="status"]').value = fm.status || 'anterior';
+      form.querySelector('[name="genre"]').value = fm.genre || '';
+      form.querySelector('[name="youtubeId"]').value = fm.youtubeId || '';
+      form.querySelector('[name="order"]').value = fm.order || '';
+      form.querySelector('[name="originalPath"]').value = path;
+      form.querySelector('[name="coverImage"]').value = fm.coverImage || '';
+
+      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('modal').classList.add('flex');
+      document.getElementById('form-obra').classList.remove('hidden');
+      document.getElementById('form-representacion').classList.add('hidden');
+      document.getElementById('modal-title').textContent = 'Editar Obra';
+    }
+
+    async function deleteRepresentacion(path, sha) {
+      if (!confirm('¿Seguro que quieres eliminar esta representación?')) return;
+
+      if (await deleteFile(path, sha)) {
+        showToast('Eliminado correctamente');
+        loadRepresentaciones();
+      } else {
+        alert('Error al eliminar');
+      }
+    }
+
+    // Form submissions
+    document.getElementById('form-representacion').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form));
+
+      const obraOption = form.querySelector(`select[name="obraSlug"] option[value="${data.obraSlug}"]`);
+      const obraTitle = obraOption ? obraOption.dataset.title : data.obraSlug;
+
+      const content = `---
+date: ${data.date}
+time: "${data.time}"
+venue: "${data.venue}"
+city: "${data.city}"
+province: "${data.province}"
+obra: "${obraTitle}"
+obraSlug: "${data.obraSlug}"${data.event ? `\nevent: "${data.event}"` : ''}${data.ticketUrl ? `\nticketUrl: "${data.ticketUrl}"` : ''}${data.price ? `\nprice: "${data.price}"` : ''}
+---
+`;
+
+      const slug = data.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+      const filename = `${data.date}-${slug}.md`;
+      const path = data.originalPath || `src/content/representaciones/${filename}`;
+
+      let sha = null;
+      if (data.originalPath) {
+        const existing = await getFile(data.originalPath);
+        sha = existing?.sha;
+      }
+
+      if (await saveFile(path, content, sha)) {
+        showToast('Guardado correctamente');
+        closeModal();
+        loadRepresentaciones();
+      } else {
+        alert('Error al guardar');
+      }
+    });
+
+    document.getElementById('form-obra').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form));
+
+      const coverImage = data.coverImage || '/images/placeholder.jpg';
+
+      const content = `---
+title: "${data.title}"${data.author ? `\nauthor: "${data.author}"` : ''}
+description: "${data.description}"${data.year ? `\nyear: ${data.year}` : ''}
+status: "${data.status}"
+coverImage: "${coverImage}"${data.genre ? `\ngenre: "${data.genre}"` : ''}${data.youtubeId ? `\nyoutubeId: "${data.youtubeId}"` : ''}${data.order ? `\norder: ${data.order}` : ''}
+---
+
+${data.title}
+`;
+
+      const slug = data.title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+      const filename = `${slug}.md`;
+      const path = data.originalPath || `src/content/obras/${filename}`;
+
+      let sha = null;
+      if (data.originalPath) {
+        const existing = await getFile(data.originalPath);
+        sha = existing?.sha;
+      }
+
+      if (await saveFile(path, content, sha)) {
+        showToast('Guardado correctamente');
+        closeModal();
+        loadObras();
+      } else {
+        alert('Error al guardar');
+      }
+    });
+
+    // UI helpers
+    function showTab(tab) {
+      document.querySelectorAll('[id^="content-"]').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('[id^="tab-"]').forEach(el => {
+        el.classList.remove('tab-active');
+        el.classList.add('bg-gray-200');
+      });
+      document.getElementById(`content-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-${tab}`).classList.add('tab-active');
+      document.getElementById(`tab-${tab}`).classList.remove('bg-gray-200');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    // Init
+    function init() {
+      if (getToken()) {
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('admin-panel').classList.remove('hidden');
+        loadObras();
+        loadRepresentaciones();
+      }
+    }
+
+    init();
+  </script>
+</body>
 </html>
