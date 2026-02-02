@@ -10,6 +10,7 @@ gallery:
   - "/images/galeria/nueva-obra-prueba/1770040104553-20190726_214004.jpg"
   - "/images/galeria/nueva-obra-prueba/1770040106132-20190730_211304.jpg"
 genre: "Comedia"
+order: 1
 ---
 
 Nueva Obra prueba
