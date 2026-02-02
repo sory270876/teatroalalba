@@ -4,6 +4,10 @@ import Button from '../components/common/Button.astro';
 import { getCollection } from 'astro:content';
 
 const representaciones = await getCollection('representaciones');
+const obras = await getCollection('obras');
+
+// Crear mapa de slug -> coverImage para las obras
+const obrasCoverMap = new Map(obras.map(obra => [obra.slug, obra.data.coverImage]));
 
 // Sort by date
 const sortedRepresentaciones = representaciones.sort((a, b) =>
@@ -56,11 +60,12 @@ function formatShortDate(date: Date): { day: string; month: string } {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-animate>
           {sortedRepresentaciones.map((rep) => {
             const shortDate = formatShortDate(rep.data.date);
+            const imagen = rep.data.image || obrasCoverMap.get(rep.data.obraSlug) || '/images/placeholder.jpg';
             return (
               <article class="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow">
                 <div class="relative">
                   <img
-                    src={rep.data.image}
+                    src={imagen}
                     alt={rep.data.obra}
                     class={`w-full h-64 object-cover ${rep.data.obraSlug === 'la-trampa' ? 'object-[center_20%]' : ''}`}
                     loading="lazy"
