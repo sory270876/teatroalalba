@@ -25,7 +25,7 @@ export const navigation = [
   { name: 'Inicio', href: '/' },
   { name: 'Quiénes somos', href: '/quienes-somos' },
   { name: 'Cartelera', href: '/cartelera' },
-  { name: 'Representaciones', href: '/representaciones' },
+  { name: 'Calendario', href: '/representaciones' },
   { name: 'Premios', href: '/premios' },
   { name: 'Obras anteriores', href: '/obras-anteriores' },
   { name: 'Contacto', href: '/contacto' }
