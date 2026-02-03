@@ -364,8 +364,11 @@
       const response = await githubAPI(`/contents/${path}?ref=${BRANCH}`);
       if (!response.ok) return null;
       const data = await response.json();
+      // Decodificar UTF-8 correctamente (para acentos, ñ, etc.)
+      const bytes = Uint8Array.from(atob(data.content), c => c.charCodeAt(0));
+      const content = new TextDecoder('utf-8').decode(bytes);
       return {
-        content: atob(data.content),
+        content: content,
         sha: data.sha
       };
     }
