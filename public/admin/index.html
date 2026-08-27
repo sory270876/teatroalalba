@@ -304,6 +304,11 @@
     let existingGalleryImages = [];
     let certamenCounter = 0;
 
+    function yamlStr(val) {
+      if (val === null || val === undefined || val === '') return '""';
+      return '"' + String(val).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+    }
+
     // Token management
     function getToken() {
       return localStorage.getItem('github_token');
@@ -951,12 +956,12 @@
 
       const content = `---
 date: ${data.date}
-time: "${data.time}"
-venue: "${data.venue}"
-city: "${data.city}"
-province: "${data.province}"
-obra: "${obraTitle}"
-obraSlug: "${data.obraSlug}"${data.event ? `\nevent: "${data.event}"` : ''}${data.ticketUrl ? `\nticketUrl: "${data.ticketUrl}"` : ''}${data.price ? `\nprice: "${data.price}"` : ''}
+time: ${yamlStr(data.time)}
+venue: ${yamlStr(data.venue)}
+city: ${yamlStr(data.city)}
+province: ${yamlStr(data.province)}
+obra: ${yamlStr(obraTitle)}
+obraSlug: ${yamlStr(data.obraSlug)}${data.event ? `\nevent: ${yamlStr(data.event)}` : ''}${data.ticketUrl ? `\nticketUrl: ${yamlStr(data.ticketUrl)}` : ''}${data.price ? `\nprice: ${yamlStr(data.price)}` : ''}
 ---
 `;
 
@@ -1012,16 +1017,16 @@ obraSlug: "${data.obraSlug}"${data.event ? `\nevent: "${data.event}"` : ''}${dat
 
         let galleryYaml = '';
         if (galleryPaths.length > 0) {
-          galleryYaml = '\ngallery:\n' + galleryPaths.map(p => `  - "${p}"`).join('\n');
+          galleryYaml = '\ngallery:\n' + galleryPaths.map(p => `  - ${yamlStr(p)}`).join('\n');
         }
 
         const bodyContent = data.body ? data.body.trim() : data.title;
 
         const content = `---
-title: "${data.title}"${data.author ? `\nauthor: "${data.author}"` : ''}
-description: "${data.description}"${data.year ? `\nyear: ${data.year}` : ''}
-status: "${data.status}"
-coverImage: "${coverImagePath}"${galleryYaml}${data.genre ? `\ngenre: "${data.genre}"` : ''}${data.youtubeId ? `\nyoutubeId: "${data.youtubeId}"` : ''}${data.order ? `\norder: ${data.order}` : ''}
+title: ${yamlStr(data.title)}${data.author ? `\nauthor: ${yamlStr(data.author)}` : ''}
+description: ${yamlStr(data.description)}${data.year ? `\nyear: ${data.year}` : ''}
+status: ${yamlStr(data.status)}
+coverImage: ${yamlStr(coverImagePath)}${galleryYaml}${data.genre ? `\ngenre: ${yamlStr(data.genre)}` : ''}${data.youtubeId ? `\nyoutubeId: ${yamlStr(data.youtubeId)}` : ''}${data.order ? `\norder: ${data.order}` : ''}
 ---
 
 ${bodyContent}
@@ -1072,21 +1077,21 @@ ${bodyContent}
       // Build YAML for certamenes
       let certamenesYaml = 'certamenes:\n';
       certamenes.forEach(c => {
-        certamenesYaml += `  - nombre: "${c.nombre}"\n`;
+        certamenesYaml += `  - nombre: ${yamlStr(c.nombre)}\n`;
         certamenesYaml += `    premios:\n`;
         c.premios.forEach(p => {
-          certamenesYaml += `      - tipo: "${p.tipo}"\n`;
-          certamenesYaml += `        categoria: "${p.categoria}"\n`;
+          certamenesYaml += `      - tipo: ${yamlStr(p.tipo)}\n`;
+          certamenesYaml += `        categoria: ${yamlStr(p.categoria)}\n`;
           if (p.persona) {
-            certamenesYaml += `        persona: "${p.persona}"\n`;
+            certamenesYaml += `        persona: ${yamlStr(p.persona)}\n`;
           }
         });
       });
 
       const content = `---
-obra: "${obraTitle}"
-obraSlug: "${data.obraSlug}"
-obraImage: "${obraImage}"${data.order ? `\norder: ${data.order}` : ''}
+obra: ${yamlStr(obraTitle)}
+obraSlug: ${yamlStr(data.obraSlug)}
+obraImage: ${yamlStr(obraImage)}${data.order ? `\norder: ${data.order}` : ''}
 ${certamenesYaml}---
 `;
 
